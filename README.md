@@ -20,7 +20,7 @@ A basic example of an AI voice assistant using LiveKit [Android Components](http
 
 ### Using the LiveKit CLI
 
-The easiest way to get started is to use the [LiveKit CLI](https://docs.livekit.io/cli/). Run the following command to bootstrap this template:
+The easiest way to get started is to use the [LiveKit CLI](https://docs.livekit.io/home/cli/). Run the following command to bootstrap this template:
 
 ```bash
 lk app create --template android-voice-assistant [--sandbox <sandboxID>]
