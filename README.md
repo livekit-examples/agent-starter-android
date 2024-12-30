@@ -40,4 +40,4 @@ In production, you will want to host your own token server to generate tokens in
 
 ## Agent
 
-This example app requires an AI agent to communicate with. You can use one of our example agents in [livekit-examples](https://github.com/livekit-examples/), or create your own following one of our [agent quickstarts](https://docs.livekit.io/agents/quickstart/).
+This example app requires an AI agent to communicate with. You can use one of our example agents in [livekit-examples](https://github.com/livekit-examples/), or create your own following one of our [agent quickstarts](https://docs.livekit.io/agents/quickstarts/voice-agent/).
