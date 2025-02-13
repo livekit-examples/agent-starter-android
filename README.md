@@ -1,43 +1,36 @@
-<a href="https://livekit.io/">
-  <img src="./.github/assets/livekit-mark.png" alt="LiveKit logo" width="100" height="100">
-</a>
+<img src="./.github/assets/app-icon.png" alt="Voice Assistant App Icon" width="100" height="100">
 
 # Android Voice Assistant
 
-<p>
-  <a href="https://cloud.livekit.io/projects/p_/sandbox"><strong>Deploy a sandbox app</strong></a>
-  •
-  <a href="https://docs.livekit.io/agents/overview/">LiveKit Agents Docs</a>
-  •
-  <a href="https://livekit.io/cloud">LiveKit Cloud</a>
-  •
-  <a href="https://blog.livekit.io/">Blog</a>
-</p>
+This is a starter template for [LiveKit Agents](https://docs.livekit.io/agents/overview/) that provides a simple voice interface using the [LiveKit Android SDK](https://github.com/livekit/client-sdk-android).
 
-A basic example of an AI voice assistant using LiveKit [Android Components](https://docs.livekit.io/reference/components/android/).
+This template is free for you to use or modify as you see fit.
 
-## Installation
+<img src="./.github/assets/screenshot.png" alt="Voice Assistant Screenshot" height="500">
 
-### Using the LiveKit CLI
+## Getting started
 
-The easiest way to get started is to use the [LiveKit CLI](https://docs.livekit.io/home/cli/cli-setup/). Run the following command to bootstrap this template:
+The easiest way to get this app running is with the [Sandbox for LiveKit Cloud](https://cloud.livekit.io/projects/p_/sandbox) and the [LiveKit CLI](https://docs.livekit.io/home/cli/cli-setup/).
+
+First, create a new [Sandbox Token Server](https://cloud.livekit.io/projects/p_mytc7vpzfkt/sandbox/templates/token-server) for your LiveKit Cloud project.
+
+Then, run the following command to automatically clone this template and connect it to LiveKit Cloud:
 
 ```bash
-lk app create --template android-voice-assistant [--sandbox <sandboxID>]
+lk app create --template android-voice-assistant --sandbox <token_server_sandbox_id>
 ```
 
-Then follow instructions to [set up an agent](#agent) for your app to talk to.
+Build and run the app in Android Studio.
 
-### Manual Installation
+You'll also need an agent to speak with. Try our sample voice assistant agent for [Python](https://github.com/livekit-examples/voice-pipeline-agent-python), [Node.js](https://github.com/livekit-examples/voice-pipeline-agent-node), or [create your own from scratch](https://docs.livekit.io/agents/quickstart/).
 
-Clone the repository and install dependencies using Gradle, then edit the `TokenExt.kt` file in the app source to add either a `sandboxID` (if using a hosted Token Server via [Sandboxes](https://cloud.livekit.io/projects/p_/sandbox)), or a [manually generated](#token-generation) URL and token.
+> [!NOTE]
+> To setup without the LiveKit CLI, clone the repository and edit the `TokenExt.kt` file to add either a `sandboxID` (if using a [Sandbox Token Server](https://cloud.livekit.io/projects/p_/sandbox/templates/token-server)), or a [manually generated](#token-generation) URL and token.
 
-Then follow instructions to [set up an agent](#agent) for your app to talk to.
+## Token generation
 
-## Token Generation
+In a production environment, you will be responsible for developing a solution to [generate tokens for your users](https://docs.livekit.io/home/server/generating-tokens/) which is integrated with your authentication solution. You should disable your sandbox token server and modify `TokenExt.kt` to use your own token server.
 
-In production, you will want to host your own token server to generate tokens in order for users of your app to join LiveKit rooms. But while prototyping, you can either hardcode your token, or use a hosted Token Server via [Sandboxes](https://cloud.livekit.io/projects/p_/sandbox)). 
+## Contributing
 
-## Agent
-
-This example app requires an AI agent to communicate with. You can use one of our example agents in [livekit-examples](https://github.com/livekit-examples/), or create your own following one of our [agent quickstarts](https://docs.livekit.io/agents/quickstarts/voice-agent/).
+This template is open source and we welcome contributions! Please open a PR or issue through GitHub, and don't forget to join us in the [LiveKit Community Slack](https://livekit.io/join-slack)!
