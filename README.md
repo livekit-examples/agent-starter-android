@@ -6,8 +6,6 @@ This is a starter template for [LiveKit Agents](https://docs.livekit.io/agents/o
 
 This template is free for you to use or modify as you see fit.
 
-<img src="./.github/assets/screenshot.png" alt="Voice Assistant Screenshot" height="500">
-
 ## Getting started
 
 The easiest way to get this app running is with the [Sandbox for LiveKit Cloud](https://cloud.livekit.io/projects/p_/sandbox) and the [LiveKit CLI](https://docs.livekit.io/home/cli/cli-setup/).
