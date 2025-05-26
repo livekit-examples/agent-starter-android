@@ -23,7 +23,7 @@ import io.livekit.android.room.types.TranscriptionSegment
  */
 @Composable
 fun UserTranscription(
-    segment: TranscriptionSegment,
+    transcription: TranscriptionSegment,
     modifier: Modifier = Modifier
 ) {
     val state = remember {
@@ -43,9 +43,10 @@ fun UserTranscription(
                 .background(Color.LightGray)
         ) {
             Text(
-                text = segment.text,
+                text = transcription.text,
                 fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(8.dp)
+                modifier = Modifier.padding(8.dp),
+                color = Color.Black
             )
         }
     }

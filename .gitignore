@@ -10,3 +10,8 @@
 local.properties
 .env
 .env.local
+deploymentTargetSelector.xml
+runConfigurations.xml
+.idea/vcs.xml
+.idea/inspectionProfiles/Project_Default.xml
+vcs.xml
