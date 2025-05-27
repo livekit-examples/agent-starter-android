@@ -9,9 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -25,29 +23,16 @@ fun ChatLog(room: Room, modifier: Modifier = Modifier) {
     Box(modifier = modifier) {
         // Get and display the transcriptions.
         val transcriptions = rememberTranscriptions(room)
+        val displayTranscriptions = transcriptions.asReversed()
         val lazyListState = rememberLazyListState()
 
-        val lastUserTranscription by remember(transcriptions) {
-            derivedStateOf {
-                transcriptions.lastOrNull { it.identity == room.localParticipant.identity }
-            }
+        LaunchedEffect(transcriptions) {
+            lazyListState.animateScrollToItem(0)
         }
-
-        val lastAgentSegment by remember(transcriptions) {
-            derivedStateOf {
-                transcriptions.lastOrNull { it.identity != room.localParticipant.identity }
-            }
-        }
-
-        val displayTranscriptions by remember(lastUserTranscription, lastAgentSegment) {
-            derivedStateOf {
-                listOfNotNull(lastUserTranscription, lastAgentSegment)
-            }
-        }
-
         LazyColumn(
             userScrollEnabled = true,
             state = lazyListState,
+            reverseLayout = true,
             modifier = modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
@@ -62,7 +47,7 @@ fun ChatLog(room: Room, modifier: Modifier = Modifier) {
                         .padding(16.dp)
                         .animateItem()
                 ) {
-                    if (transcription == lastUserTranscription) {
+                    if (transcription.identity == room.localParticipant.identity) {
                         UserTranscription(
                             transcription = transcription.transcriptionSegment,
                             modifier = Modifier.align(Alignment.CenterEnd)

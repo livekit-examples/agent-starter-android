@@ -6,7 +6,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.ScreenShare
+import androidx.compose.material.icons.filled.CallEnd
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MicOff
+import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.filled.VideocamOff
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -21,47 +31,62 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ControlBar(
+    isMicEnabled: Boolean = true,
     onMicClick: () -> Unit = {},
+    isCameraEnabled: Boolean = true,
     onCameraClick: () -> Unit = {},
-    onUploadClick: () -> Unit = {},
+    isScreenShareEnabled: Boolean = true,
+    onScreenShareClick: () -> Unit = {},
     onChatClick: () -> Unit = {},
-    onExitClick:() -> Unit = {},
+    onExitClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
 
     var height by remember { mutableIntStateOf(0) }
     val cornerRadius = height / 2f
-    Row (
+    Row(
         horizontalArrangement = Arrangement.SpaceEvenly,
         modifier = modifier
             .onSizeChanged { height = it.height }
             .clip(RoundedCornerShape(cornerRadius))
-            .background(Color.Red)
+            .background(MaterialTheme.colorScheme.surface)
     ) {
 
-        Button(onClick = onMicClick) {
-
+        val micIcon = if (isMicEnabled) {
+            Icons.Default.Mic
+        } else {
+            Icons.Default.MicOff
         }
-        Button(onClick = onCameraClick) {
-
+        IconButton(onClick = onMicClick) {
+            Icon(micIcon, "Toggle Microphone")
         }
-        Button(onClick = onUploadClick) {
 
+        val cameraIcon = if (isMicEnabled) {
+            Icons.Default.Videocam
+        } else {
+            Icons.Default.VideocamOff
         }
-        Button(onClick = onChatClick) {
-
+        IconButton(onClick = onCameraClick) {
+            Icon(cameraIcon, "Toggle Camera")
         }
-        Button(onClick = onExitClick) {
-
+        IconButton(onClick = onScreenShareClick) {
+            Icon(Icons.AutoMirrored.Filled.ScreenShare, "Toggle Camera")
+        }
+        IconButton(onClick = onChatClick) {
+            Icon(Icons.AutoMirrored.Filled.Chat, "Toggle Chat")
+        }
+        IconButton(onClick = onExitClick) {
+            Icon(Icons.Default.CallEnd, "End Call", tint = Color.Red)
         }
     }
 }
 
 @Preview
 @Composable
-fun ControlBarPreview(){
+fun ControlBarPreview() {
     ControlBar(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
             .height(40.dp)
     )
 }

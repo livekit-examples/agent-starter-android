@@ -5,8 +5,9 @@ package io.livekit.android.example.voiceassistant
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -85,20 +86,20 @@ class MainActivity : ComponentActivity() {
                 )
 
                 // Amplitude visualization of the Assistant's voice track.
-
+                val agentBorderAlpha by animateFloatAsState(if (chatVisible) 1f else 0f, label = "agentBorderAlpha")
                 AgentVisualization(
                     voiceAssistant = voiceAssistant,
                     modifier = Modifier
-                        .background(Color.Yellow)
                         .layoutId(LAYOUT_ID_AGENT)
+                        .border(1.dp, Color.Gray.copy(alpha = agentBorderAlpha))
                 )
 
-
                 ControlBar(
-                    onChatClick = {
-                        chatVisible = !chatVisible
-                    },
-                    modifier = Modifier.layoutId(LAYOUT_ID_CONTROL_BAR)
+                    isMicEnabled = room.localParticipant.isCameraEnabled(),
+                    onChatClick = { chatVisible = !chatVisible },
+                    onExitClick = { finish() },
+                    modifier = Modifier
+                        .layoutId(LAYOUT_ID_CONTROL_BAR)
                 )
 
             }
@@ -118,7 +119,7 @@ private fun getConstraints(chatVisible: Boolean) = ConstraintSet {
         LAYOUT_ID_CONTROL_BAR,
         LAYOUT_ID_CHAT_BAR
     )
-    val chatTopGuideline = createGuidelineFromTop(0.3f)
+    val chatTopGuideline = createGuidelineFromTop(0.2f)
 
     constrain(chatLog) {
         top.linkTo(chatTopGuideline)
@@ -150,12 +151,14 @@ private fun getConstraints(chatVisible: Boolean) = ConstraintSet {
         top.linkTo(parent.top)
         start.linkTo(parent.start)
         end.linkTo(parent.end)
+        height = Dimension.fillToConstraints
+
         if (!chatVisible) {
             bottom.linkTo(parent.bottom)
+            width = Dimension.fillToConstraints
         } else {
             bottom.linkTo(chatTopGuideline)
+            width = Dimension.percent(0.3f)
         }
-        width = Dimension.fillToConstraints
-        height = Dimension.fillToConstraints
     }
 }

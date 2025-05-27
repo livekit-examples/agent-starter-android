@@ -73,7 +73,7 @@ fun rememberTranscriptions(room: Room): List<Transcription> {
 
 private fun createTranscriptionSegment(streamInfo: TextStreamInfo): TranscriptionSegment {
     return TranscriptionSegment(
-        id = streamInfo.id,
+        id = streamInfo.attributes["lk.segment_id"] ?: "",
         text = "",
         language = "",
         final = streamInfo.attributes["lk.transcription.final"]?.toBoolean() ?: false,
