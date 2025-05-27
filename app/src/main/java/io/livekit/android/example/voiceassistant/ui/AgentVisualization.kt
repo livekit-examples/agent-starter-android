@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -18,17 +19,20 @@ fun AgentVisualization(
     voiceAssistant: VoiceAssistant,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-    ) {
-        VoiceAssistantBarVisualizer(
-            voiceAssistant = voiceAssistant,
-            barCount = 5,
-            brush = SolidColor(MaterialTheme.colorScheme.onBackground),
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxSize(0.4f)
-        )
+    key("visualizer") {
+
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = modifier
+        ) {
+            VoiceAssistantBarVisualizer(
+                voiceAssistant = voiceAssistant,
+                barCount = 5,
+                brush = SolidColor(MaterialTheme.colorScheme.onBackground),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxSize(0.4f)
+            )
+        }
     }
 }
