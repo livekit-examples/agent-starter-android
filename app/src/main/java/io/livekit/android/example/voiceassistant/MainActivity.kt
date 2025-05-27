@@ -5,37 +5,30 @@ package io.livekit.android.example.voiceassistant
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
-import com.github.ajalt.timberkt.Timber
 import io.livekit.android.LiveKit
 import io.livekit.android.annotations.Beta
 import io.livekit.android.compose.local.RoomScope
 import io.livekit.android.compose.state.rememberVoiceAssistant
-import io.livekit.android.compose.ui.audio.VoiceAssistantBarVisualizer
-import io.livekit.android.example.voiceassistant.datastreams.rememberTranscriptions
-import io.livekit.android.example.voiceassistant.ui.UserTranscription
+import io.livekit.android.example.voiceassistant.ui.AgentVisualization
+import io.livekit.android.example.voiceassistant.ui.ChatLog
+import io.livekit.android.example.voiceassistant.ui.ControlBar
+import io.livekit.android.example.voiceassistant.ui.MessageBar
 import io.livekit.android.example.voiceassistant.ui.theme.LiveKitVoiceAssistantExampleTheme
 import io.livekit.android.util.LoggingLevel
 
@@ -47,12 +40,13 @@ class MainActivity : ComponentActivity() {
             requireToken { url, token ->
                 setContent {
                     LiveKitVoiceAssistantExampleTheme(dynamicColor = false) {
-                        Surface {
+                        Scaffold { innerPadding ->
                             VoiceAssistant(
                                 url,
                                 token,
                                 modifier = Modifier
                                     .fillMaxSize()
+                                    .padding(innerPadding)
                             )
                         }
                     }
@@ -70,92 +64,83 @@ class MainActivity : ComponentActivity() {
                 audio = true,
                 connect = true,
             ) { room ->
-                val (audioVisualizer, chatLog) = createRefs()
+                val (topSpacer, agentVisualizer, chatLog, controlBar, messageBar) = createRefs()
                 val voiceAssistant = rememberVoiceAssistant()
 
-                val agentState = voiceAssistant.state
-                // Optionally do something with the agent state.
-                LaunchedEffect(key1 = agentState) {
-                    Timber.i { "agent state: $agentState" }
-                }
-
-                // Amplitude visualization of the Assistant's voice track.
-                VoiceAssistantBarVisualizer(
-                    voiceAssistant = voiceAssistant,
+                // Spacer for the ChatLog to link to.
+                Spacer(
                     modifier = Modifier
-                        .padding(8.dp)
-                        .fillMaxWidth()
-                        .constrainAs(audioVisualizer) {
-                            height = Dimension.percent(0.1f)
-                            width = Dimension.percent(0.8f)
-
-                            top.linkTo(parent.top, 8.dp)
+                        .background(Color.Green)
+                        .constrainAs(topSpacer) {
+                            top.linkTo(parent.top)
                             start.linkTo(parent.start)
                             end.linkTo(parent.end)
-                        },
-                    brush = SolidColor(MaterialTheme.colorScheme.onBackground)
+                            width = Dimension.fillToConstraints
+                            height = Dimension.percent(0.3f)
+                        }
                 )
 
-                // Get and display the transcriptions.
-                val transcriptions = rememberTranscriptions(room)
-                val lazyListState = rememberLazyListState()
-
-                val lastUserTranscription by remember(transcriptions) {
-                    derivedStateOf {
-                        transcriptions.lastOrNull { it.identity == room.localParticipant.identity }
-                    }
-                }
-
-                val lastAgentSegment by remember(transcriptions) {
-                    derivedStateOf {
-                        transcriptions.lastOrNull { it.identity != room.localParticipant.identity }
-                    }
-                }
-
-                val displayTranscriptions by remember(lastUserTranscription, lastAgentSegment) {
-                    derivedStateOf {
-                        listOfNotNull(lastUserTranscription, lastAgentSegment)
-                    }
-                }
-
-                LazyColumn(
-                    userScrollEnabled = true,
-                    state = lazyListState,
+                ChatLog(
+                    room = room,
                     modifier = Modifier
+                        .background(Color.Red)
                         .constrainAs(chatLog) {
-                            bottom.linkTo(parent.bottom)
+                            top.linkTo(topSpacer.bottom)
+                            bottom.linkTo(messageBar.top)
                             start.linkTo(parent.start)
                             end.linkTo(parent.end)
-                            height = Dimension.percent(0.9f)
                             width = Dimension.fillToConstraints
+                            height = Dimension.fillToConstraints
                         }
-                ) {
-                    items(
-                        items = displayTranscriptions,
-                        key = { transcription -> transcription.transcriptionSegment.id },
-                    ) { transcription ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                                .animateItem()
-                        ) {
-                            if (transcription == lastUserTranscription) {
-                                UserTranscription(
-                                    transcription = transcription.transcriptionSegment,
-                                    modifier = Modifier.align(Alignment.CenterEnd)
-                                )
+                )
+
+                MessageBar(
+                    modifier = Modifier
+                        .background(Color.Magenta)
+                        .constrainAs(messageBar) {
+                            bottom.linkTo(controlBar.top)
+                            start.linkTo(parent.start)
+                            end.linkTo(parent.end)
+                            width = Dimension.fillToConstraints
+                            height = Dimension.value(40.dp)
+                        }
+                )
+
+                var chatVisible by remember { mutableStateOf(false) }
+                // Amplitude visualization of the Assistant's voice track.
+                AgentVisualization(
+                    voiceAssistant = voiceAssistant,
+                    modifier = Modifier
+                        .animateContentSize()
+                        .background(Color.Yellow)
+                        .constrainAs(agentVisualizer) {
+                            top.linkTo(parent.top)
+                            start.linkTo(parent.start)
+                            end.linkTo(parent.end)
+                            if (!chatVisible) {
+                                bottom.linkTo(parent.bottom)
                             } else {
-                                Text(
-                                    text = transcription.transcriptionSegment.text,
-                                    fontWeight = FontWeight.Light,
-                                    fontSize = 20.sp,
-                                    modifier = Modifier.align(Alignment.CenterStart)
-                                )
+                                bottom.linkTo(topSpacer.bottom)
                             }
+                            width = Dimension.fillToConstraints
+                            height = Dimension.fillToConstraints
                         }
-                    }
-                }
+                )
+
+
+                ControlBar(
+                    onChatClick = { chatVisible = !chatVisible },
+                    modifier = Modifier
+                        .constrainAs(controlBar) {
+                            bottom.linkTo(parent.bottom, 10.dp)
+                            start.linkTo(parent.start, 20.dp)
+                            end.linkTo(parent.end, 20.dp)
+
+                            width = Dimension.fillToConstraints
+                            height = Dimension.value(40.dp)
+                        }
+                )
+
             }
         }
     }
