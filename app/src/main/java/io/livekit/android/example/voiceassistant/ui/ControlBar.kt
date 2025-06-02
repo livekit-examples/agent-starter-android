@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.ScreenShare
@@ -24,6 +25,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.tooling.preview.Preview
@@ -47,11 +49,15 @@ fun ControlBar(
 ) {
 
     var height by remember { mutableIntStateOf(0) }
+    val cornerRadius = height / 2f
+
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = modifier
             .onSizeChanged { height = it.height }
-            .background(MaterialTheme.colorScheme.background)
+            .clip(RoundedCornerShape(cornerRadius))
+            .background(MaterialTheme.colorScheme.surface)
+
             .padding(horizontal = 20.dp, vertical = 8.dp)
     ) {
 
