@@ -2,6 +2,7 @@ package io.livekit.android.example.voiceassistant.datastreams
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
@@ -14,6 +15,7 @@ import io.livekit.android.room.types.merge
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Date
+import java.util.UUID
 
 private const val TRANSCRIPTION_TOPIC = "lk.transcription"
 
@@ -22,17 +24,46 @@ data class Transcription(
     val transcriptionSegment: TranscriptionSegment,
 )
 
+data class TranscriptionsState(
+    val transcriptions: State<List<Transcription>>,
+    /**
+     * For manually adding local transcriptions to the state.
+     */
+    val addTranscription: (identity: Participant.Identity, message: String) -> Unit
+)
+
 /**
  * Listens for incoming transcription data streams, and returns
  * all received transcriptions ordered by first received time.
  */
 @Composable
-fun rememberTranscriptions(room: Room): List<Transcription> {
+fun rememberTranscriptions(room: Room): TranscriptionsState {
     val coroutineScope = rememberCoroutineScope()
     val transcriptions = remember(room) { mutableStateMapOf<String, Transcription>() }
     val orderedTranscriptions = remember(transcriptions) {
         derivedStateOf {
             transcriptions.values.sortedBy { segment -> segment.transcriptionSegment.firstReceivedTime }
+        }
+    }
+    val transcriptionsState = remember(transcriptions, orderedTranscriptions) {
+        TranscriptionsState(
+            orderedTranscriptions
+        ) { identity, message ->
+            transcriptions.mergeNewSegments(
+                listOf(
+                    Transcription(
+                        identity = identity,
+                        TranscriptionSegment(
+                            id = UUID.randomUUID().toString(),
+                            text = message,
+                            language = "",
+                            final = true,
+                            firstReceivedTime = Date().time,
+                            lastReceivedTime = Date().time,
+                        )
+                    )
+                )
+            )
         }
     }
 
@@ -68,7 +99,7 @@ fun rememberTranscriptions(room: Room): List<Transcription> {
         }
     }
 
-    return orderedTranscriptions.value
+    return transcriptionsState
 }
 
 private fun createTranscriptionSegment(streamInfo: TextStreamInfo): TranscriptionSegment {
