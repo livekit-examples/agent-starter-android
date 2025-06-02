@@ -13,18 +13,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
 import kotlin.math.max
 
 @Composable
-fun CircleRevealAnimation(
+fun CircleReveal(
     revealed: Boolean,
-    initialContent: @Composable () -> Unit,
-    revealContent: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     animationSpec: AnimationSpec<Float> = spring(stiffness = Spring.StiffnessLow),
+    content: @Composable () -> Unit,
 ) {
+
     val clipPercent by animateFloatAsState(
         targetValue = if (revealed) 1f else 0f,
         label = "Circle Reveal Percent",
@@ -32,16 +33,11 @@ fun CircleRevealAnimation(
     )
 
     Box(modifier = modifier) {
-        // Draw initial content if not fully revealed.
+        // Draw content if not fully revealed.
         if (clipPercent < 1f) {
-            initialContent()
-        }
-
-        // Draw revealed content if any revealed.
-        if (clipPercent > 0f) {
             val path = remember { Path() }
 
-            val clipModifier = if (clipPercent < 1f) {
+            val clipModifier = if (clipPercent > 0f) {
                 Modifier
                     .fillMaxSize()
                     .drawWithContent {
@@ -54,14 +50,13 @@ fun CircleRevealAnimation(
                             )
                         )
 
-                        clipPath(path) { this@drawWithContent.drawContent() }
+                        clipPath(path, clipOp = ClipOp.Difference) { this@drawWithContent.drawContent() }
                     }
             } else {
                 Modifier.fillMaxSize()
             }
-
             Box(modifier = clipModifier) {
-                revealContent()
+                content()
             }
         }
     }
