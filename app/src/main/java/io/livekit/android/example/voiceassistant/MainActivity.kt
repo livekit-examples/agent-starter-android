@@ -23,17 +23,22 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.unit.dp
+import androidx.constraintlayout.compose.ChainStyle
+import androidx.constraintlayout.compose.ConstrainScope
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.ConstraintSet
 import androidx.constraintlayout.compose.Dimension
+import androidx.constraintlayout.compose.Visibility
+import androidx.constraintlayout.compose.layoutId
 import io.livekit.android.LiveKit
 import io.livekit.android.annotations.Beta
 import io.livekit.android.compose.local.RoomScope
 import io.livekit.android.compose.state.rememberParticipantTrackReferences
 import io.livekit.android.compose.state.rememberVoiceAssistant
+import io.livekit.android.compose.ui.VideoTrackView
 import io.livekit.android.example.voiceassistant.datastreams.rememberTranscriptions
 import io.livekit.android.example.voiceassistant.ui.AgentVisualization
 import io.livekit.android.example.voiceassistant.ui.ChatBar
@@ -42,12 +47,11 @@ import io.livekit.android.example.voiceassistant.ui.ControlBar
 import io.livekit.android.example.voiceassistant.ui.theme.LiveKitVoiceAssistantExampleTheme
 import io.livekit.android.room.datastream.StreamTextOptions
 import io.livekit.android.room.datastream.TextStreamInfo
-import io.livekit.android.room.participant.Participant
 import io.livekit.android.room.track.Track
 import io.livekit.android.room.track.screencapture.ScreenCaptureParams
 import io.livekit.android.util.LoggingLevel
+import io.livekit.android.util.flow
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -81,9 +85,14 @@ class MainActivity : ComponentActivity() {
             audio = true,
             connect = true,
         ) { room ->
-            var chatVisible by remember { mutableStateOf(true) }
-            val constraints = getConstraints(chatVisible)
+
+            var chatVisible by remember { mutableStateOf(false) }
+            val isMicEnabled by room.localParticipant::isMicrophoneEnabled.flow.collectAsState()
+            val isCameraEnabled by room.localParticipant::isCameraEnabled.flow.collectAsState()
+            val isScreenShareEnabled by room.localParticipant::isScreenShareEnabled.flow.collectAsState()
             val transcriptionsState = rememberTranscriptions(room)
+
+            val constraints = getConstraints(chatVisible, isCameraEnabled, isScreenShareEnabled)
             ConstraintLayout(
                 constraintSet = constraints,
                 modifier = modifier,
@@ -122,17 +131,6 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.layoutId(LAYOUT_ID_CHAT_BAR)
                 )
 
-//                var message by rememberSaveable { mutableStateOf("") }
-//                TextField(
-//                    value = message,
-//                    onValueChange = { message = it },
-//                    modifier = Modifier.layoutId(LAYOUT_ID_CHAT_BAR),
-//                    shape = RoundedCornerShape(50),
-//                    enabled = true,
-//                    singleLine = false,
-//                    maxLines = 3,
-//                    minLines = 1,
-//                )
                 // Amplitude visualization of the Assistant's voice track.
                 val voiceAssistant = rememberVoiceAssistant()
                 val agentBorderAlpha by animateFloatAsState(if (chatVisible) 1f else 0f, label = "agentBorderAlpha")
@@ -142,10 +140,6 @@ class MainActivity : ComponentActivity() {
                         .layoutId(LAYOUT_ID_AGENT)
                         .border(1.dp, Color.Gray.copy(alpha = agentBorderAlpha))
                 )
-
-                val isMicEnabled = isTrackEnabled(room.localParticipant, Track.Source.MICROPHONE)
-                val isCameraEnabled = isTrackEnabled(room.localParticipant, Track.Source.CAMERA)
-                val isScreenShareEnabled = isTrackEnabled(room.localParticipant, Track.Source.SCREEN_SHARE)
 
                 val screenSharePermissionLauncher =
                     rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -169,9 +163,13 @@ class MainActivity : ComponentActivity() {
                         coroutineScope.launch { room.localParticipant.setCameraEnabled(!isCameraEnabled) }
                     },
                     onScreenShareClick = {
-                        // Screenshare permission needs to be requested each time.
-                        val mediaProjectionManager = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-                        screenSharePermissionLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
+                        if (!isScreenShareEnabled) {
+                            // Screenshare permission needs to be requested each time.
+                            val mediaProjectionManager = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+                            screenSharePermissionLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
+                        } else {
+                            coroutineScope.launch { room.localParticipant.setScreenShareEnabled(false) }
+                        }
                     },
                     onChatClick = { chatVisible = !chatVisible },
                     onExitClick = { finish() },
@@ -179,33 +177,49 @@ class MainActivity : ComponentActivity() {
                         .layoutId(LAYOUT_ID_CONTROL_BAR)
                 )
 
+                val cameraAlpha by animateFloatAsState(targetValue = if (isCameraEnabled) 1f else 0f, label = "Camera Alpha")
+                val cameraTrack = rememberParticipantTrackReferences(
+                    listOf(Track.Source.CAMERA),
+                    passedParticipant = room.localParticipant
+                ).firstOrNull()
+                VideoTrackView(
+                    trackReference = cameraTrack,
+                    modifier = Modifier
+                        .layoutId(LAYOUT_ID_CAMERA)
+                        .alpha(cameraAlpha)
+                )
+
+                val screenShareAlpha by animateFloatAsState(targetValue = if (isCameraEnabled) 1f else 0f, label = "Screen Share Alpha")
+                val screenShareTrack = rememberParticipantTrackReferences(
+                    listOf(Track.Source.SCREEN_SHARE),
+                    passedParticipant = room.localParticipant
+                ).firstOrNull()
+                VideoTrackView(
+                    trackReference = screenShareTrack,
+                    modifier = Modifier
+                        .layoutId(LAYOUT_ID_SCREENSHARE)
+                        .alpha(screenShareAlpha)
+                )
             }
         }
     }
-}
-
-@Composable
-fun isTrackEnabled(passedParticipant: Participant, source: Track.Source): Boolean {
-    val track = rememberParticipantTrackReferences(
-        sources = listOf(source),
-        passedParticipant = passedParticipant,
-        onlySubscribed = false
-    ).firstOrNull() ?: return false
-    val publication = track.publication ?: return false
-    return !(publication::muted.asFlow().collectAsState(true).value)
 }
 
 private const val LAYOUT_ID_AGENT = "agentVisualizer"
 private const val LAYOUT_ID_CHAT_LOG = "chatLog"
 private const val LAYOUT_ID_CONTROL_BAR = "controlBar"
 private const val LAYOUT_ID_CHAT_BAR = "chatBar"
+private const val LAYOUT_ID_CAMERA = "camera"
+private const val LAYOUT_ID_SCREENSHARE = "screenshare"
 
-private fun getConstraints(chatVisible: Boolean) = ConstraintSet {
-    val (agentVisualizer, chatLog, controlBar, chatBar) = createRefsFor(
+private fun getConstraints(chatVisible: Boolean, cameraVisible: Boolean, screenShareVisible: Boolean) = ConstraintSet {
+    val (agentVisualizer, chatLog, controlBar, chatBar, camera, screenShare) = createRefsFor(
         LAYOUT_ID_AGENT,
         LAYOUT_ID_CHAT_LOG,
         LAYOUT_ID_CONTROL_BAR,
-        LAYOUT_ID_CHAT_BAR
+        LAYOUT_ID_CHAT_BAR,
+        LAYOUT_ID_CAMERA,
+        LAYOUT_ID_SCREENSHARE,
     )
     val chatTopGuideline = createGuidelineFromTop(0.2f)
 
@@ -235,18 +249,56 @@ private fun getConstraints(chatVisible: Boolean) = ConstraintSet {
         height = Dimension.value(60.dp)
     }
 
-    constrain(agentVisualizer) {
-        top.linkTo(parent.top)
-        start.linkTo(parent.start)
-        end.linkTo(parent.end)
-        height = Dimension.fillToConstraints
+    if (chatVisible) {
+        val chain = createHorizontalChain(agentVisualizer, screenShare, camera, chainStyle = ChainStyle.Spread)
 
-        if (!chatVisible) {
-            bottom.linkTo(parent.bottom)
-            width = Dimension.fillToConstraints
-        } else {
+        constrain(chain) {
+            start.linkTo(parent.start)
+            end.linkTo(parent.end)
+        }
+
+        fun ConstrainScope.itemConstraints(visible: Boolean = true) {
+            top.linkTo(parent.top)
             bottom.linkTo(chatTopGuideline)
             width = Dimension.percent(0.3f)
+            height = Dimension.fillToConstraints
+            visibility = if (visible) Visibility.Visible else Visibility.Gone
+        }
+        constrain(agentVisualizer) {
+            itemConstraints()
+        }
+        constrain(camera) {
+            itemConstraints(cameraVisible)
+        }
+        constrain(screenShare) {
+            itemConstraints(screenShareVisible)
+        }
+    } else {
+        constrain(agentVisualizer) {
+            top.linkTo(parent.top)
+            bottom.linkTo(parent.bottom)
+            start.linkTo(parent.start)
+            end.linkTo(parent.end)
+            height = Dimension.fillToConstraints
+            width = Dimension.fillToConstraints
+        }
+        constrain(camera) {
+            end.linkTo(parent.end, 16.dp)
+            bottom.linkTo(controlBar.top, 16.dp)
+            width = Dimension.percent(0.2f)
+            height = Dimension.percent(0.2f)
+            visibility = if (cameraVisible) Visibility.Visible else Visibility.Gone
+        }
+        constrain(screenShare) {
+            if (cameraVisible) {
+                end.linkTo(camera.start, 16.dp)
+            } else {
+                end.linkTo(parent.end, 16.dp)
+            }
+            bottom.linkTo(controlBar.top, 16.dp)
+            width = Dimension.percent(0.2f)
+            height = Dimension.percent(0.2f)
+            visibility = if (screenShareVisible) Visibility.Visible else Visibility.Gone
         }
     }
 }
