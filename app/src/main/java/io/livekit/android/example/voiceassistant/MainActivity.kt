@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -80,7 +81,7 @@ class MainActivity : ComponentActivity() {
             audio = true,
             connect = true,
         ) { room ->
-            var chatVisible by remember { mutableStateOf(false) }
+            var chatVisible by remember { mutableStateOf(true) }
             val constraints = getConstraints(chatVisible)
             val transcriptionsState = rememberTranscriptions(room)
             ConstraintLayout(
@@ -96,8 +97,13 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.layoutId(LAYOUT_ID_CHAT_LOG)
                 )
 
+                var message by rememberSaveable {
+                    mutableStateOf("")
+                }
                 ChatBar(
-                    onChatSend = { message ->
+                    value = message,
+                    onValueChange = { message = it },
+                    onChatSend = { msg ->
                         coroutineScope.launch {
                             val sender = room.localParticipant.streamText(
                                 StreamTextOptions(
@@ -105,16 +111,28 @@ class MainActivity : ComponentActivity() {
                                     topic = "lk.chat"
                                 )
                             )
-                            sender.write(message)
+                            sender.write(msg)
                             sender.close()
 
                             val identity = room.localParticipant.identity ?: return@launch
-                            transcriptionsState.addTranscription(identity, message)
+                            transcriptionsState.addTranscription(identity, msg)
                         }
+                        message = ""
                     },
                     modifier = Modifier.layoutId(LAYOUT_ID_CHAT_BAR)
                 )
 
+//                var message by rememberSaveable { mutableStateOf("") }
+//                TextField(
+//                    value = message,
+//                    onValueChange = { message = it },
+//                    modifier = Modifier.layoutId(LAYOUT_ID_CHAT_BAR),
+//                    shape = RoundedCornerShape(50),
+//                    enabled = true,
+//                    singleLine = false,
+//                    maxLines = 3,
+//                    minLines = 1,
+//                )
                 // Amplitude visualization of the Assistant's voice track.
                 val voiceAssistant = rememberVoiceAssistant()
                 val agentBorderAlpha by animateFloatAsState(if (chatVisible) 1f else 0f, label = "agentBorderAlpha")
@@ -144,7 +162,6 @@ class MainActivity : ComponentActivity() {
                 ControlBar(
                     isMicEnabled = isMicEnabled,
                     isCameraEnabled = isCameraEnabled,
-                    isScreenShareEnabled = isScreenShareEnabled,
                     onMicClick = {
                         coroutineScope.launch { room.localParticipant.setMicrophoneEnabled(!isMicEnabled) }
                     },
@@ -201,21 +218,21 @@ private fun getConstraints(chatVisible: Boolean) = ConstraintSet {
         height = Dimension.fillToConstraints
     }
 
-    constrain(controlBar) {
-        bottom.linkTo(parent.bottom, 10.dp)
-        start.linkTo(parent.start, 20.dp)
-        end.linkTo(parent.end, 20.dp)
-
+    constrain(chatBar) {
+        bottom.linkTo(controlBar.top, 16.dp)
+        start.linkTo(parent.start, 16.dp)
+        end.linkTo(parent.end, 16.dp)
         width = Dimension.fillToConstraints
         height = Dimension.wrapContent
     }
 
-    constrain(chatBar) {
-        bottom.linkTo(controlBar.top)
-        start.linkTo(parent.start)
-        end.linkTo(parent.end)
+    constrain(controlBar) {
+        bottom.linkTo(parent.bottom, 10.dp)
+        start.linkTo(parent.start, 16.dp)
+        end.linkTo(parent.end, 16.dp)
+
         width = Dimension.fillToConstraints
-        height = Dimension.wrapContent
+        height = Dimension.value(60.dp)
     }
 
     constrain(agentVisualizer) {

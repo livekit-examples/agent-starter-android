@@ -30,6 +30,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
@@ -70,10 +71,12 @@ fun LKTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     singleLine: Boolean = false,
+    minLines: Int = 1,
     maxLines: Int = Int.MAX_VALUE,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     shape: Shape = TextFieldDefaults.filledShape,
-    colors: TextFieldColors = TextFieldDefaults.colors()
+    colors: TextFieldColors = TextFieldDefaults.colors(),
+    contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     // If color is not provided via the text style, use content color as a default
     val textColor = textStyle.color.takeOrElse {
@@ -88,12 +91,13 @@ fun LKTextField(
         enabled = enabled,
         readOnly = readOnly,
         textStyle = mergedTextStyle,
-        cursorBrush = SolidColor(Color.White),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurface),
         visualTransformation = visualTransformation,
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         interactionSource = interactionSource,
         singleLine = singleLine,
+        minLines = minLines,
         maxLines = maxLines,
         decorationBox = @Composable { innerTextField ->
             // places leading icon, text field with label and placeholder, trailing icon
@@ -106,13 +110,13 @@ fun LKTextField(
                 leadingIcon = leadingIcon,
                 trailingIcon = trailingIcon,
                 supportingText = supportingText,
-                shape = RoundedCornerShape(5.dp),
+                shape = RoundedCornerShape(50),
                 singleLine = singleLine,
                 enabled = enabled,
                 isError = isError,
                 interactionSource = interactionSource,
                 colors = colors,
-                contentPadding = PaddingValues(10.dp)
+                contentPadding = PaddingValues(0.dp)
             )
         }
     )
