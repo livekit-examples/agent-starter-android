@@ -18,9 +18,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import io.livekit.android.example.voiceassistant.datastreams.Transcription
 import io.livekit.android.room.Room
 
@@ -77,8 +75,6 @@ fun ChatLog(room: Room, transcriptions: List<Transcription>, modifier: Modifier 
                     } else {
                         Text(
                             text = transcription.transcriptionSegment.text,
-                            fontWeight = FontWeight.Light,
-                            fontSize = 20.sp,
                             modifier = Modifier.align(Alignment.CenterStart)
                         )
                     }

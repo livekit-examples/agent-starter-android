@@ -15,6 +15,6 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 val LightLine = Color(0x1FFFFFFF)
-val Blue500 = Color(0xFF1F8CF9)
+val Blue500 = Color(0xFF002CF2)
 val Indicator = Color(0xFF1FF968)
 val NoVideoBackground = Color(0xFF181818)
