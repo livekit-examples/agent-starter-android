@@ -285,7 +285,7 @@ private fun getConstraints(chatVisible: Boolean, cameraVisible: Boolean, screenS
         constrain(camera) {
             end.linkTo(parent.end, 16.dp)
             bottom.linkTo(controlBar.top, 16.dp)
-            width = Dimension.percent(0.2f)
+            width = Dimension.percent(0.25f)
             height = Dimension.percent(0.2f)
             visibility = if (cameraVisible) Visibility.Visible else Visibility.Gone
         }
@@ -296,7 +296,7 @@ private fun getConstraints(chatVisible: Boolean, cameraVisible: Boolean, screenS
                 end.linkTo(parent.end, 16.dp)
             }
             bottom.linkTo(controlBar.top, 16.dp)
-            width = Dimension.percent(0.2f)
+            width = Dimension.percent(0.25f)
             height = Dimension.percent(0.2f)
             visibility = if (screenShareVisible) Visibility.Visible else Visibility.Gone
         }
