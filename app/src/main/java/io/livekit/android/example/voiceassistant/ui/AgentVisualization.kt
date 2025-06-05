@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -24,11 +23,11 @@ import androidx.compose.ui.unit.dp
 import io.livekit.android.annotations.Beta
 import io.livekit.android.compose.state.VoiceAssistant
 import io.livekit.android.compose.state.rememberParticipantTrackReferences
+import io.livekit.android.compose.ui.ScaleType
 import io.livekit.android.compose.ui.VideoTrackView
 import io.livekit.android.compose.ui.audio.VoiceAssistantBarVisualizer
 import io.livekit.android.example.voiceassistant.ui.anim.CircleReveal
 import io.livekit.android.room.track.Track
-import kotlinx.coroutines.delay
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -41,37 +40,51 @@ fun AgentVisualization(
     voiceAssistant: VoiceAssistant,
     modifier: Modifier = Modifier
 ) {
+
+    // For non agent testing
+//    val room = requireRoom()
+//    val participants by room::remoteParticipants.flow.collectAsState()
+//    val participant = participants.values.firstOrNull()
+//    val videoTrack: TrackReference?
+//    if (participant != null) {
+//        val agentIdentity by participant::identity.flow.collectAsState()
+//        if (agentIdentity != null) {
+//            videoTrack = rememberParticipantTrackReferences(
+//                sources = listOf(Track.Source.CAMERA),
+//                participantIdentity = agentIdentity,
+//            ).firstOrNull()
+//        } else {
+//            videoTrack = null
+//        }
+//    } else {
+//        videoTrack = null
+//    }
     val agentIdentity = voiceAssistant.agent?.identity
+
     val videoTrack = if (agentIdentity != null) {
         rememberParticipantTrackReferences(
             sources = listOf(Track.Source.CAMERA),
-            participantIdentity = voiceAssistant.agent?.identity,
+            participantIdentity = agentIdentity,
         ).firstOrNull()
     } else {
         null
     }
 
-    val revealed = videoTrack != null
-    var delayedReveal by remember { mutableStateOf(false) }
-    LaunchedEffect(revealed) {
-        if (revealed) {
-            delay(1000)
-        }
-        delayedReveal = revealed
-    }
+    var hasFirstFrameRendered by remember(videoTrack) { mutableStateOf(false) }
+    val revealed = videoTrack != null && hasFirstFrameRendered
 
-    Box(
-        modifier = modifier
-    ) {
+    Box(modifier = modifier) {
         if (videoTrack != null) {
             VideoTrackView(
                 trackReference = videoTrack,
+                scaleType = ScaleType.FitInside,
+                onFirstFrameRendered = { hasFirstFrameRendered = true },
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxSize(),
             )
         }
         CircleReveal(
-            revealed = delayedReveal,
+            revealed = revealed,
             content = {
                 Box(
                     contentAlignment = Alignment.Center,
