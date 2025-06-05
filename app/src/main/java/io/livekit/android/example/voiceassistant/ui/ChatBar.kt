@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -43,6 +45,7 @@ fun ChatBar(
     )
     ConstraintLayout(
         modifier = Modifier
+            .imePadding()
             .sizeIn(minHeight = 48.dp)
             .clip(RoundedCornerShape(with(LocalDensity.current) { 24.dp.toPx() }))
             .background(MaterialTheme.colorScheme.surface)
@@ -54,13 +57,14 @@ fun ChatBar(
         LKTextField(
             value = value,
             onValueChange = onValueChange,
+            textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
             colors = TextFieldDefaults.colors().copy(
                 disabledTextColor = Color.Transparent,
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent
+                disabledIndicatorColor = Color.Transparent,
             ),
             maxLines = 3,
             placeholder = {
@@ -94,7 +98,7 @@ fun ChatBar(
                     height = Dimension.preferredValue(32.dp)
                 }
         ) {
-            Icon(Icons.Default.ArrowUpward, contentDescription = "Send Message", tint = MaterialTheme.colorScheme.onSurface)
+            Icon(Icons.Default.ArrowUpward, contentDescription = "Send Message", tint = if(value.isEmpty()) MaterialTheme.colorScheme.onSurface else Color.White)
         }
     }
 
