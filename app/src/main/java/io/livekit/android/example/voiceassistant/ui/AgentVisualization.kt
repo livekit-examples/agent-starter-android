@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +42,7 @@ fun AgentVisualization(
     modifier: Modifier = Modifier
 ) {
 
+    // TODO: REMOVE
     // For non agent testing
 //    val room = requireRoom()
 //    val participants by room::remoteParticipants.flow.collectAsState()
@@ -93,23 +95,32 @@ fun AgentVisualization(
                         .background(MaterialTheme.colorScheme.background)
                 ) {
                     val density = LocalDensity.current
+                    var width by remember { mutableIntStateOf(0) }
                     var height by remember { mutableIntStateOf(0) }
-                    val heightDp by remember {
+
+                    val barWidth by remember {
                         derivedStateOf {
-                            val heightDp = height / density.density
-                            return@derivedStateOf max(1, (heightDp * 0.1f).roundToInt()).dp
+                            val widthDp = width / density.density
+                            return@derivedStateOf max(1, (widthDp * 0.157f).roundToInt()).dp
+                        }
+                    }
+                    val barMinHeightPercent by remember {
+                        derivedStateOf {
+                            val widthPx = barWidth.value * density.density
+                            return@derivedStateOf max(0f, (widthPx / height))
                         }
                     }
                     VoiceAssistantBarVisualizer(
                         voiceAssistant = voiceAssistant,
                         barCount = 5,
-                        minHeight = 0.1f,
-                        barWidth = heightDp,
+                        minHeight = barMinHeightPercent,
+                        barWidth = barWidth,
                         brush = SolidColor(MaterialTheme.colorScheme.onBackground),
                         modifier = Modifier
-                            .fillMaxWidth(0.5f)
-                            .fillMaxSize(0.4f)
+                            .fillMaxWidth(0.75f)
+                            .fillMaxHeight(0.22f)
                             .onSizeChanged { size ->
+                                width = size.width
                                 height = size.height
                             }
                     )
