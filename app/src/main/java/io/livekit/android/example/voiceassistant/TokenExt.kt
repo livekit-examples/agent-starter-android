@@ -1,5 +1,6 @@
 package io.livekit.android.example.voiceassistant
 
+import androidx.annotation.Keep
 import com.github.ajalt.timberkt.Timber
 import com.google.gson.Gson
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -62,6 +63,7 @@ suspend fun retrieveToken(): ConnectionDetails = suspendCancellableCoroutine { c
     })
 }
 
+@Keep
 data class ConnectionDetails(
     val serverUrl: String,
     val participantToken: String,
