@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -156,7 +157,8 @@ fun VoiceAssistant(
                 voiceAssistant = voiceAssistant,
                 modifier = Modifier
                     .layoutId(LAYOUT_ID_AGENT)
-                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = agentBorderAlpha))
+                    .clip(RoundedCornerShape(8.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = agentBorderAlpha), RoundedCornerShape(8.dp))
             )
 
             val context = LocalContext.current
@@ -168,6 +170,8 @@ fun VoiceAssistant(
                         return@rememberLauncherForActivityResult
                     }
                     coroutineScope.launch {
+                        // Agents only support one video stream at a time.
+                        requestedVideo = false
                         room.localParticipant.setScreenShareEnabled(true, ScreenCaptureParams(data))
                     }
                 }
@@ -176,7 +180,13 @@ fun VoiceAssistant(
                 isMicEnabled = isMicEnabled,
                 onMicClick = { requestedAudio = !requestedAudio },
                 isCameraEnabled = isCameraEnabled,
-                onCameraClick = { requestedVideo = !requestedVideo },
+                onCameraClick = {
+                    requestedVideo = !requestedVideo
+                    if (requestedVideo) {
+                        // Agents only support one video stream at a time.
+                        coroutineScope.launch { room.localParticipant.setScreenShareEnabled(false) }
+                    }
+                },
                 isScreenShareEnabled = isScreenShareEnabled,
                 onScreenShareClick = {
                     if (!isScreenShareEnabled) {
@@ -207,6 +217,7 @@ fun VoiceAssistant(
                             .getOrCreateDefaultVideoTrack()
                             .switchCamera()
                     }
+                    .clip(RoundedCornerShape(8.dp))
                     .alpha(cameraAlpha)
             ) {
                 VideoTrackView(
@@ -241,6 +252,7 @@ fun VoiceAssistant(
                 trackReference = screenShareTrack,
                 modifier = Modifier
                     .layoutId(LAYOUT_ID_SCREENSHARE)
+                    .clip(RoundedCornerShape(8.dp))
                     .alpha(screenShareAlpha)
             )
         }
