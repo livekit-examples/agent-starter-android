@@ -15,7 +15,7 @@ First, create a new [Sandbox Token Server](https://cloud.livekit.io/projects/p_m
 Then, run the following command to automatically clone this template and connect it to LiveKit Cloud:
 
 ```bash
-lk app create --template android-voice-assistant --sandbox <token_server_sandbox_id>
+lk app create --template android-voice-assistant --sandbox <token_server_sandbox_id> --api-key <your API key> --api-secret <your API secret>
 ```
 
 Build and run the app in Android Studio.
