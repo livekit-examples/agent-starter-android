@@ -105,9 +105,10 @@ fun ControlBar(
                     brush = SolidColor(MaterialTheme.colorScheme.onBackground),
                     barCount = 3,
                     barWidth = 2.dp,
+                    minHeight = 0.2f,
                     modifier = Modifier
                         .width(12.dp)
-                        .height(32.dp)
+                        .height(20.dp)
                 )
             }
             Spacer(Modifier.size(8.dp))

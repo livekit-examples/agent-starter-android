@@ -30,7 +30,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
@@ -141,6 +143,10 @@ fun ConnectScreen(
                     }
                     Text(
                         text = if (isConnecting) "CONNECTING" else "START CALL",
+                        style = TextStyle(
+                            fontFamily = FontFamily.Monospace,
+                            letterSpacing = 2.sp,
+                        )
                     )
                 }
             }

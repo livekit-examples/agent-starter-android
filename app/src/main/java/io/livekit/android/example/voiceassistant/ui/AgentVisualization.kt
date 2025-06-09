@@ -116,6 +116,7 @@ fun AgentVisualization(
                         minHeight = barMinHeightPercent,
                         barWidth = barWidth,
                         brush = SolidColor(MaterialTheme.colorScheme.onBackground),
+                        animationSpec = spring(stiffness = Spring.StiffnessMedium),
                         modifier = Modifier
                             .fillMaxWidth(0.75f)
                             .fillMaxHeight(0.22f)
