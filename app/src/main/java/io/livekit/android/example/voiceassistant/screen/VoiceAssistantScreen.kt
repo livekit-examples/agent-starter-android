@@ -29,12 +29,16 @@ import androidx.constraintlayout.compose.ConstraintSet
 import androidx.constraintlayout.compose.Dimension
 import androidx.constraintlayout.compose.Visibility
 import androidx.constraintlayout.compose.layoutId
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import io.livekit.android.annotations.Beta
 import io.livekit.android.compose.local.RoomScope
 import io.livekit.android.compose.state.rememberParticipantTrackReferences
 import io.livekit.android.compose.state.rememberVoiceAssistant
 import io.livekit.android.compose.ui.VideoTrackView
 import io.livekit.android.example.voiceassistant.datastreams.rememberTranscriptions
+import io.livekit.android.example.voiceassistant.rememberEnableCamera
+import io.livekit.android.example.voiceassistant.rememberEnableMic
+import io.livekit.android.example.voiceassistant.requirePermissions
 import io.livekit.android.example.voiceassistant.ui.AgentVisualization
 import io.livekit.android.example.voiceassistant.ui.ChatBar
 import io.livekit.android.example.voiceassistant.ui.ChatLog
@@ -65,7 +69,7 @@ fun VoiceAssistantScreen(
     )
 }
 
-@OptIn(Beta::class)
+@OptIn(Beta::class, ExperimentalPermissionsApi::class)
 @Composable
 fun VoiceAssistant(
     url: String,
@@ -73,14 +77,22 @@ fun VoiceAssistant(
     modifier: Modifier = Modifier,
     onEndCall: () -> Unit
 ) {
+
+    var requestedAudio by remember { mutableStateOf(true) } // Turn on audio by default.
+    var requestedVideo by remember { mutableStateOf(false) }
+
+    requirePermissions(requestedAudio, requestedVideo)
+
     RoomScope(
         url,
         token,
-        audio = true,
+        audio = rememberEnableMic(requestedAudio),
+        video = rememberEnableCamera(requestedVideo),
         connect = true,
     ) { room ->
 
         var chatVisible by remember { mutableStateOf(false) }
+
         val isMicEnabled by room.localParticipant::isMicrophoneEnabled.flow.collectAsState()
         val isCameraEnabled by room.localParticipant::isCameraEnabled.flow.collectAsState()
         val isScreenShareEnabled by room.localParticipant::isScreenShareEnabled.flow.collectAsState()
@@ -151,12 +163,8 @@ fun VoiceAssistant(
             ControlBar(
                 isMicEnabled = isMicEnabled,
                 isCameraEnabled = isCameraEnabled,
-                onMicClick = {
-                    coroutineScope.launch { room.localParticipant.setMicrophoneEnabled(!isMicEnabled) }
-                },
-                onCameraClick = {
-                    coroutineScope.launch { room.localParticipant.setCameraEnabled(!isCameraEnabled) }
-                },
+                onMicClick = { requestedAudio = !requestedAudio },
+                onCameraClick = { requestedVideo = !requestedVideo },
                 onScreenShareClick = {
                     if (!isScreenShareEnabled) {
                         // Screenshare permission needs to be requested each time.

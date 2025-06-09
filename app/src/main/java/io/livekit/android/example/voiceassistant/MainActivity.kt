@@ -1,5 +1,3 @@
-@file:OptIn(Beta::class)
-
 package io.livekit.android.example.voiceassistant
 
 import android.os.Bundle
@@ -14,7 +12,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import io.livekit.android.LiveKit
-import io.livekit.android.annotations.Beta
 import io.livekit.android.example.voiceassistant.screen.ConnectRoute
 import io.livekit.android.example.voiceassistant.screen.ConnectScreen
 import io.livekit.android.example.voiceassistant.screen.VoiceAssistantRoute
@@ -27,33 +24,32 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         LiveKit.loggingLevel = LoggingLevel.DEBUG
-        requireNeededPermissions {
-            setContent {
+        setContent {
 
-                val navController = rememberNavController()
+            val navController = rememberNavController()
+            LiveKitVoiceAssistantExampleTheme(dynamicColor = false) {
+                Scaffold { innerPadding ->
+                    Box(modifier = Modifier.padding(innerPadding)) {
 
-                LiveKitVoiceAssistantExampleTheme(dynamicColor = false) {
-                    Scaffold { innerPadding ->
-                        Box(modifier = Modifier.padding(innerPadding)) {
-                            NavHost(navController, startDestination = ConnectRoute) {
-                                composable<ConnectRoute> {
-                                    ConnectScreen { url, token ->
-                                        runOnUiThread {
-                                            navController.navigate(VoiceAssistantRoute(url, token))
-                                        }
+                        // Set up NavHost for the app
+                        NavHost(navController, startDestination = ConnectRoute) {
+                            composable<ConnectRoute> {
+                                ConnectScreen { url, token ->
+                                    runOnUiThread {
+                                        navController.navigate(VoiceAssistantRoute(url, token))
                                     }
                                 }
+                            }
 
-                                composable<VoiceAssistantRoute> { backStackEntry ->
-                                    val route = backStackEntry.toRoute<VoiceAssistantRoute>()
-                                    VoiceAssistantScreen(
-                                        url = route.url,
-                                        token = route.token,
-                                        onEndCall = {
-                                            runOnUiThread { navController.navigateUp() }
-                                        }
-                                    )
-                                }
+                            composable<VoiceAssistantRoute> { backStackEntry ->
+                                val route = backStackEntry.toRoute<VoiceAssistantRoute>()
+                                VoiceAssistantScreen(
+                                    url = route.url,
+                                    token = route.token,
+                                    onEndCall = {
+                                        runOnUiThread { navController.navigateUp() }
+                                    }
+                                )
                             }
                         }
                     }

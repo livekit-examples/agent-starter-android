@@ -61,6 +61,7 @@ dependencies {
 
     implementation(libs.livekit.lib)
     implementation(libs.livekit.components)
+    implementation(libs.accompanist.permissions)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
