@@ -7,8 +7,19 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cameraswitch
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -17,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
@@ -144,7 +156,7 @@ fun VoiceAssistant(
                 voiceAssistant = voiceAssistant,
                 modifier = Modifier
                     .layoutId(LAYOUT_ID_AGENT)
-                    .border(1.dp, Color.Gray.copy(alpha = agentBorderAlpha))
+                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = agentBorderAlpha))
             )
 
             val context = LocalContext.current
@@ -162,9 +174,10 @@ fun VoiceAssistant(
 
             ControlBar(
                 isMicEnabled = isMicEnabled,
-                isCameraEnabled = isCameraEnabled,
                 onMicClick = { requestedAudio = !requestedAudio },
+                isCameraEnabled = isCameraEnabled,
                 onCameraClick = { requestedVideo = !requestedVideo },
+                isScreenShareEnabled = isScreenShareEnabled,
                 onScreenShareClick = {
                     if (!isScreenShareEnabled) {
                         // Screenshare permission needs to be requested each time.
@@ -174,6 +187,7 @@ fun VoiceAssistant(
                         coroutineScope.launch { room.localParticipant.setScreenShareEnabled(false) }
                     }
                 },
+                isChatEnabled = chatVisible,
                 onChatClick = { chatVisible = !chatVisible },
                 onExitClick = onEndCall,
                 modifier = Modifier
@@ -185,12 +199,38 @@ fun VoiceAssistant(
                 listOf(Track.Source.CAMERA),
                 passedParticipant = room.localParticipant
             ).firstOrNull()
-            VideoTrackView(
-                trackReference = cameraTrack,
+            Box(
                 modifier = Modifier
                     .layoutId(LAYOUT_ID_CAMERA)
+                    .clickable {
+                        room.localParticipant
+                            .getOrCreateDefaultVideoTrack()
+                            .switchCamera()
+                    }
                     .alpha(cameraAlpha)
-            )
+            ) {
+                VideoTrackView(
+                    trackReference = cameraTrack,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 8.dp, bottom = 8.dp)
+                        .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(50))
+                        .fillMaxWidth(.35f)
+                        .aspectRatio(1f)
+                ) {
+                    Icon(
+                        Icons.Default.Cameraswitch,
+                        tint = Color.White.copy(alpha = 0.7f),
+                        contentDescription = "Flip Camera",
+                        modifier = Modifier.fillMaxSize(0.6f)
+                    )
+                }
+            }
 
             val screenShareAlpha by animateFloatAsState(targetValue = if (isScreenShareEnabled) 1f else 0f, label = "Screen Share Alpha")
             val screenShareTrack = rememberParticipantTrackReferences(

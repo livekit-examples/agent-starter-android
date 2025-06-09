@@ -2,12 +2,11 @@ package io.livekit.android.example.voiceassistant.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -43,25 +42,40 @@ private val buttonModifier = Modifier
     .width(40.dp)
     .height(40.dp)
 
+@Composable
+private fun Modifier.enabledButtonModifier(enabled: Boolean): Modifier {
+    return if (enabled) {
+        this
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surface)
+    } else {
+        this
+    }
+}
+
 @OptIn(Beta::class)
 @Composable
 fun ControlBar(
-    isMicEnabled: Boolean = true,
-    onMicClick: () -> Unit = {},
-    isCameraEnabled: Boolean = true,
-    onCameraClick: () -> Unit = {},
-    onScreenShareClick: () -> Unit = {},
-    onChatClick: () -> Unit = {},
-    onExitClick: () -> Unit = {},
+    isMicEnabled: Boolean,
+    onMicClick: () -> Unit,
+    isCameraEnabled: Boolean,
+    onCameraClick: () -> Unit,
+    isScreenShareEnabled: Boolean,
+    onScreenShareClick: () -> Unit,
+    isChatEnabled: Boolean,
+    onChatClick: () -> Unit,
+    onExitClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
 
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.8f))
+            .padding(horizontal = 20.dp)
     ) {
 
         val micIcon = if (isMicEnabled) {
@@ -78,10 +92,10 @@ fun ControlBar(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .fillMaxHeight()
-                .defaultMinSize(minWidth = 52.dp)
-                .clip(RoundedCornerShape(50))
                 .clickable(onClick = onMicClick)
+                .height(48.dp)
+                .weight(1f)
+                .enabledButtonModifier(isMicEnabled)
         ) {
             Spacer(Modifier.size(8.dp))
             Icon(micIcon, "Toggle Microphone")
@@ -99,21 +113,55 @@ fun ControlBar(
             Spacer(Modifier.size(8.dp))
         }
 
+        Spacer(Modifier.size(8.dp))
+
         val cameraIcon = if (isCameraEnabled) {
             Icons.Default.Videocam
         } else {
             Icons.Default.VideocamOff
         }
-        IconButton(onClick = onCameraClick, modifier = buttonModifier) {
-            Icon(cameraIcon, "Toggle Camera")
+
+        IconButton(
+            onClick = onCameraClick,
+            modifier = Modifier
+                .weight(1f)
+                .height(40.dp)
+                .enabledButtonModifier(isCameraEnabled)
+        ) {
+            Icon(
+                cameraIcon,
+                "Toggle Camera"
+            )
         }
-        IconButton(onClick = onScreenShareClick, modifier = buttonModifier) {
+
+        Spacer(Modifier.size(8.dp))
+
+        IconButton(
+            onClick = onScreenShareClick,
+            modifier = buttonModifier
+                .weight(1f)
+                .enabledButtonModifier(isScreenShareEnabled)
+        ) {
             Icon(Icons.Outlined.PresentToAll, "Toggle Screenshare")
         }
-        IconButton(onClick = onChatClick, modifier = buttonModifier) {
+
+        Spacer(Modifier.size(8.dp))
+
+        IconButton(
+            onClick = onChatClick,
+            modifier = buttonModifier
+                .weight(1f)
+                .enabledButtonModifier(isChatEnabled)
+        ) {
             Icon(Icons.AutoMirrored.Filled.Chat, "Toggle Chat")
         }
-        IconButton(onClick = onExitClick, modifier = buttonModifier) {
+
+        Spacer(Modifier.size(8.dp))
+
+        IconButton(
+            onClick = onExitClick,
+            modifier = buttonModifier.weight(1f)
+        ) {
             Icon(Icons.Default.CallEnd, "End Call", tint = Color.Red)
         }
     }
@@ -123,8 +171,17 @@ fun ControlBar(
 @Composable
 fun ControlBarPreview() {
     ControlBar(
+        isMicEnabled = false,
+        onMicClick = {},
+        isCameraEnabled = false,
+        onCameraClick = {},
+        isScreenShareEnabled = false,
+        onScreenShareClick = { },
+        isChatEnabled = false,
+        onChatClick = {},
+        onExitClick = {},
         modifier = Modifier
             .fillMaxWidth()
-            .height(40.dp)
+            .height(40.dp),
     )
 }
