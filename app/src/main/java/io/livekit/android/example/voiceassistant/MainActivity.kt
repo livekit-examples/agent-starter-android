@@ -23,12 +23,15 @@ import io.livekit.android.example.voiceassistant.ui.theme.LiveKitVoiceAssistantE
 import io.livekit.android.util.LoggingLevel
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         LiveKit.loggingLevel = LoggingLevel.DEBUG
         requireNeededPermissions {
             setContent {
+
                 val navController = rememberNavController()
+
                 LiveKitVoiceAssistantExampleTheme(dynamicColor = false) {
                     Scaffold { innerPadding ->
                         Box(modifier = Modifier.padding(innerPadding)) {
@@ -40,6 +43,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 }
+
                                 composable<VoiceAssistantRoute> { backStackEntry ->
                                     val route = backStackEntry.toRoute<VoiceAssistantRoute>()
                                     VoiceAssistantScreen(

@@ -184,7 +184,7 @@ fun VoiceAssistant(
                     .alpha(cameraAlpha)
             )
 
-            val screenShareAlpha by animateFloatAsState(targetValue = if (isCameraEnabled) 1f else 0f, label = "Screen Share Alpha")
+            val screenShareAlpha by animateFloatAsState(targetValue = if (isScreenShareEnabled) 1f else 0f, label = "Screen Share Alpha")
             val screenShareTrack = rememberParticipantTrackReferences(
                 listOf(Track.Source.SCREEN_SHARE),
                 passedParticipant = room.localParticipant

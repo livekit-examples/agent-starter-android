@@ -22,6 +22,8 @@ private const val sandboxID = ""
 private const val hardcodedUrl = ""
 private const val hardcodedToken = ""
 
+private val okHttpClient by lazy { OkHttpClient() }
+
 /**
  * Retrieves a LiveKit from the token server.
  *
@@ -36,13 +38,13 @@ suspend fun retrieveToken(): ConnectionDetails = suspendCancellableCoroutine { c
     }
 
     val tokenEndpoint = "https://cloud-api.livekit.io/api/sandbox/connection-details"
-    val client = OkHttpClient()
+
     val request = Request.Builder()
         .url(tokenEndpoint)
         .header("X-Sandbox-ID", sandboxID)
         .build()
 
-    client.newCall(request).enqueue(object : Callback {
+    okHttpClient.newCall(request).enqueue(object : Callback {
         override fun onFailure(call: Call, e: IOException) {
             continuation.resumeWithException(e)
         }
