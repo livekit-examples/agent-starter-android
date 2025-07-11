@@ -19,3 +19,14 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+-dontwarn okhttp3.internal.Util
+
+-dontobfuscate
+
+-keepclassmembers class io.livekit.android.** {
+    *** Companion;
+}
+-keepclasseswithmembers class io.livekit.android.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}

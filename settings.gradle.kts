@@ -20,7 +20,7 @@ dependencyResolutionManagement {
         mavenCentral()
         maven { url = URI("https://jitpack.io") }
         // For SNAPSHOT access
-        maven { url = URI("https://s01.oss.sonatype.org/content/repositories/snapshots/") }
+        // maven { url = URI("https://central.sonatype.com/repository/maven-snapshots/") }
     }
 }
 
