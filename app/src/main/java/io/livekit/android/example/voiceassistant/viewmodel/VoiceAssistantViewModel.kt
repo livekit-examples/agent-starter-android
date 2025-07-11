@@ -22,6 +22,8 @@ class VoiceAssistantViewModel(application: Application, savedStateHandle: SavedS
     init {
         val args = savedStateHandle.toRoute<VoiceAssistantRoute>()
         viewModelScope.launch(Dispatchers.IO) {
+
+            // Use preconnect audio to capture audio while connecting for faster user-perceived connection times.
             room.withPreconnectAudio {
                 room.connect(args.url, args.token)
             }

@@ -56,6 +56,7 @@ import io.livekit.android.example.voiceassistant.ui.AgentVisualization
 import io.livekit.android.example.voiceassistant.ui.ChatBar
 import io.livekit.android.example.voiceassistant.ui.ChatLog
 import io.livekit.android.example.voiceassistant.ui.ControlBar
+import io.livekit.android.example.voiceassistant.viewmodel.VoiceAssistantViewModel
 import io.livekit.android.room.datastream.StreamTextOptions
 import io.livekit.android.room.datastream.TextStreamInfo
 import io.livekit.android.room.track.Track
@@ -70,13 +71,11 @@ data class VoiceAssistantRoute(val url: String, val token: String)
 
 @Composable
 fun VoiceAssistantScreen(
-    url: String,
-    token: String,
+    viewModel: VoiceAssistantViewModel,
     onEndCall: () -> Unit,
 ) {
     VoiceAssistant(
-        url = url,
-        token = token,
+        viewModel = viewModel,
         modifier = Modifier.fillMaxSize(),
         onEndCall = onEndCall
     )
@@ -85,23 +84,21 @@ fun VoiceAssistantScreen(
 @OptIn(Beta::class, ExperimentalPermissionsApi::class)
 @Composable
 fun VoiceAssistant(
-    url: String,
-    token: String,
+    viewModel: VoiceAssistantViewModel,
     modifier: Modifier = Modifier,
     onEndCall: () -> Unit
 ) {
-
     var requestedAudio by remember { mutableStateOf(true) } // Turn on audio by default.
     var requestedVideo by remember { mutableStateOf(false) }
 
     requirePermissions(requestedAudio, requestedVideo)
 
     RoomScope(
-        url,
-        token,
+        passedRoom = viewModel.room,
         audio = rememberEnableMic(requestedAudio),
         video = rememberEnableCamera(requestedVideo),
         connect = true,
+        disconnectOnDispose = false,
     ) { room ->
 
         var chatVisible by remember { mutableStateOf(false) }
