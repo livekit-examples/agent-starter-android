@@ -1,6 +1,6 @@
 <img src="./.github/assets/app-icon.png" alt="Voice Assistant App Icon" width="100" height="100">
 
-# Android Voice Assistant
+# Android Agent Starter
 
 This is a starter template for [LiveKit Agents](https://docs.livekit.io/agents/overview/) that provides a simple voice interface using the [LiveKit Android SDK](https://github.com/livekit/client-sdk-android).
 
@@ -15,12 +15,12 @@ First, create a new [Sandbox Token Server](https://cloud.livekit.io/projects/p_m
 Then, run the following command to automatically clone this template and connect it to LiveKit Cloud:
 
 ```bash
-lk app create --template android-voice-assistant --sandbox <token_server_sandbox_id> --api-key <your API key> --api-secret <your API secret>
+lk app create --template agent-starter-android --sandbox <token_server_sandbox_id>
 ```
 
 Build and run the app in Android Studio.
 
-You'll also need an agent to speak with. Try our sample voice assistant agent for [Python](https://github.com/livekit-examples/voice-pipeline-agent-python), [Node.js](https://github.com/livekit-examples/voice-pipeline-agent-node), or [create your own from scratch](https://docs.livekit.io/agents/quickstart/).
+You'll also need an agent to speak with. Try our starter agent for [Python](https://github.com/livekit-examples/agent-starter-python), [Node.js](https://github.com/livekit-examples/agent-starter-node), or [create your own from scratch](https://docs.livekit.io/agents/start/voice-ai/).
 
 > [!NOTE]
 > To setup without the LiveKit CLI, clone the repository and edit the `TokenExt.kt` file to add either a `sandboxID` (if using a [Sandbox Token Server](https://cloud.livekit.io/projects/p_/sandbox/templates/token-server)), or a [manually generated](#token-generation) URL and token.
