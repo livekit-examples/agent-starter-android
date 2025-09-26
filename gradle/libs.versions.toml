@@ -14,7 +14,7 @@ gson = "2.11.0"
 materialIconsExtended = "1.7.8"
 okhttp = "5.0.0-alpha.14"
 timberkt = "1.5.1"
-navigationCompose = "2.9.0"
+navigationCompose = "2.9.5"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
