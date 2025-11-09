@@ -19,8 +19,17 @@ class VoiceAssistantViewModel(application: Application, savedStateHandle: SavedS
 
     val room = LiveKit.create(application)
 
-    init {
-        val args = savedStateHandle.toRoute<VoiceAssistantRoute>()
+    // Keep the route args so we can connect later when permissions are ready.
+    private val args = savedStateHandle.toRoute<VoiceAssistantRoute>()
+    private var hasConnected = false
+
+    /**
+     * Start connecting the room using preconnect audio, but only if we haven't already
+     * and the microphone permission is granted.
+     */
+    fun startConnectIfNeeded(micPermissionGranted: Boolean) {
+        if (hasConnected || !micPermissionGranted) return
+        hasConnected = true
         viewModelScope.launch(Dispatchers.IO) {
 
             // Use preconnect audio to capture audio while connecting for faster user-perceived connection times.
