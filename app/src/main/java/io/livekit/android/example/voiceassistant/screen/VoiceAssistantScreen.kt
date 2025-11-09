@@ -91,7 +91,18 @@ fun VoiceAssistant(
     var requestedAudio by remember { mutableStateOf(true) } // Turn on audio by default.
     var requestedVideo by remember { mutableStateOf(false) }
 
-    requirePermissions(requestedAudio, requestedVideo)
+        // Request runtime permissions (this will launch a permission prompt if needed)
+    val permissionsState = requirePermissions(requestedAudio, requestedVideo)
+
+    // Compute whether the microphone permission is granted so we can start connecting only when allowed.
+    val micGranted = rememberEnableMic(requestedAudio)
+
+    // Start connecting only after mic permission is granted to avoid prewarming AudioRecord without permission.
+    androidx.compose.runtime.LaunchedEffect(micGranted) {
+        if (micGranted) {
+            viewModel.startConnectIfNeeded(micGranted)
+        }
+    }
 
     RoomScope(
         passedRoom = viewModel.room,
