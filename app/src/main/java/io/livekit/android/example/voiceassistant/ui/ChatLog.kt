@@ -19,18 +19,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import io.livekit.android.example.voiceassistant.datastreams.Transcription
+import io.livekit.android.compose.types.ReceivedMessage
 import io.livekit.android.room.Room
 
 @Composable
-fun ChatLog(room: Room, transcriptions: List<Transcription>, modifier: Modifier = Modifier) {
+fun ChatLog(room: Room, messages: List<ReceivedMessage>, modifier: Modifier = Modifier) {
     Box(modifier = modifier) {
         // Get and display the transcriptions.
-        val displayTranscriptions = transcriptions.asReversed()
+        val displayTranscriptions = messages.asReversed()
         val lazyListState = rememberLazyListState()
 
         // Scroll to bottom when new transcriptions come in.
-        LaunchedEffect(transcriptions.count()) {
+        LaunchedEffect(messages.count()) {
             lazyListState.animateScrollToItem(0)
         }
         LazyColumn(
@@ -59,22 +59,23 @@ fun ChatLog(room: Room, transcriptions: List<Transcription>, modifier: Modifier 
         ) {
             items(
                 items = displayTranscriptions,
-                key = { transcription -> transcription.transcriptionSegment.id },
-            ) { transcription ->
+                key = { transcription -> transcription.id },
+            ) { message ->
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
                         .animateItem()
                 ) {
-                    if (transcription.identity == room.localParticipant.identity) {
-                        UserTranscription(
-                            transcription = transcription.transcriptionSegment,
+                    if (message.fromParticipant?.identity == room.localParticipant.identity) {
+                        UserMessage(
+                            message = message,
                             modifier = Modifier.align(Alignment.CenterEnd)
                         )
                     } else {
+                        // Agent transcription or chat message
                         Text(
-                            text = transcription.transcriptionSegment.text,
+                            text = message.message,
                             modifier = Modifier.align(Alignment.CenterStart)
                         )
                     }

@@ -33,10 +33,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.livekit.android.annotations.Beta
-import io.livekit.android.compose.local.requireRoom
-import io.livekit.android.compose.state.rememberParticipantTrackReferences
+import io.livekit.android.compose.types.TrackReference
 import io.livekit.android.compose.ui.audio.AudioBarVisualizer
-import io.livekit.android.room.track.Track
 
 private val buttonModifier = Modifier
     .width(40.dp)
@@ -58,6 +56,7 @@ private fun Modifier.enabledButtonModifier(enabled: Boolean): Modifier {
 fun ControlBar(
     isMicEnabled: Boolean,
     onMicClick: () -> Unit,
+    localAudioTrack: TrackReference?,
     isCameraEnabled: Boolean,
     onCameraClick: () -> Unit,
     isScreenShareEnabled: Boolean,
@@ -67,7 +66,6 @@ fun ControlBar(
     onExitClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -77,18 +75,12 @@ fun ControlBar(
             .background(MaterialTheme.colorScheme.background.copy(alpha = 0.8f))
             .padding(horizontal = 20.dp)
     ) {
-
         val micIcon = if (isMicEnabled) {
             Icons.Default.Mic
         } else {
             Icons.Default.MicOff
         }
 
-        val room = requireRoom()
-        val localAudioTrack = rememberParticipantTrackReferences(
-            sources = listOf(Track.Source.MICROPHONE),
-            passedParticipant = room.localParticipant
-        ).firstOrNull()
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -174,6 +166,7 @@ fun ControlBarPreview() {
     ControlBar(
         isMicEnabled = false,
         onMicClick = {},
+        localAudioTrack = null,
         isCameraEnabled = false,
         onCameraClick = {},
         isScreenShareEnabled = false,

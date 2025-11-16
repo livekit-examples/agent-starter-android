@@ -16,14 +16,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import io.livekit.android.room.types.TranscriptionSegment
+import io.livekit.android.compose.types.ReceivedMessage
 
 /**
- * Composable for displaying an individual user transcription.
+ * Composable for displaying an individual user message.
  */
 @Composable
-fun UserTranscription(
-    transcription: TranscriptionSegment,
+fun UserMessage(
+    message: ReceivedMessage,
     modifier: Modifier = Modifier
 ) {
     val state = remember {
@@ -43,7 +43,7 @@ fun UserTranscription(
                 .background(MaterialTheme.colorScheme.surface)
         ) {
             Text(
-                text = transcription.text,
+                text = message.message,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(8.dp),
                 color = MaterialTheme.colorScheme.onSurface

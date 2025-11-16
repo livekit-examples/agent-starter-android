@@ -35,11 +35,11 @@ class MainActivity : ComponentActivity() {
                         // Set up NavHost for the app
                         NavHost(navController, startDestination = ConnectRoute) {
                             composable<ConnectRoute> {
-                                ConnectScreen { url, token ->
+                                ConnectScreen(navigateToVoiceAssistant = { voiceAssistantRoute ->
                                     runOnUiThread {
-                                        navController.navigate(VoiceAssistantRoute(url, token))
+                                        navController.navigate(voiceAssistantRoute)
                                     }
-                                }
+                                })
                             }
 
                             composable<VoiceAssistantRoute> {

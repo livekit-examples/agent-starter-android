@@ -3,6 +3,7 @@ package io.livekit.android.example.voiceassistant.screen
 import android.app.Activity
 import android.content.Context.MEDIA_PROJECTION_SERVICE
 import android.media.projection.MediaProjectionManager
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
@@ -21,7 +22,8 @@ import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,30 +46,31 @@ import androidx.constraintlayout.compose.Visibility
 import androidx.constraintlayout.compose.layoutId
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import io.livekit.android.annotations.Beta
-import io.livekit.android.compose.local.RoomScope
-import io.livekit.android.compose.state.rememberParticipantTrackReferences
-import io.livekit.android.compose.state.rememberVoiceAssistant
+import io.livekit.android.compose.local.SessionScope
+import io.livekit.android.compose.local.requireRoom
+import io.livekit.android.compose.state.SessionOptions
+import io.livekit.android.compose.state.rememberAgent
+import io.livekit.android.compose.state.rememberLocalMedia
+import io.livekit.android.compose.state.rememberSession
+import io.livekit.android.compose.state.rememberSessionMessages
 import io.livekit.android.compose.ui.VideoTrackView
-import io.livekit.android.example.voiceassistant.datastreams.rememberTranscriptions
-import io.livekit.android.example.voiceassistant.rememberEnableCamera
-import io.livekit.android.example.voiceassistant.rememberEnableMic
 import io.livekit.android.example.voiceassistant.requirePermissions
 import io.livekit.android.example.voiceassistant.ui.AgentVisualization
 import io.livekit.android.example.voiceassistant.ui.ChatBar
 import io.livekit.android.example.voiceassistant.ui.ChatLog
 import io.livekit.android.example.voiceassistant.ui.ControlBar
 import io.livekit.android.example.voiceassistant.viewmodel.VoiceAssistantViewModel
-import io.livekit.android.room.datastream.StreamTextOptions
-import io.livekit.android.room.datastream.TextStreamInfo
-import io.livekit.android.room.track.Track
 import io.livekit.android.room.track.screencapture.ScreenCaptureParams
-import io.livekit.android.util.flow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class VoiceAssistantRoute(val url: String, val token: String)
+data class VoiceAssistantRoute(
+    val sandboxId: String,
+    val hardcodedUrl: String,
+    val hardcodedToken: String
+)
 
 @Composable
 fun VoiceAssistantScreen(
@@ -93,20 +96,49 @@ fun VoiceAssistant(
 
     requirePermissions(requestedAudio, requestedVideo)
 
-    RoomScope(
-        passedRoom = viewModel.room,
-        audio = rememberEnableMic(requestedAudio),
-        video = rememberEnableCamera(requestedVideo),
-        connect = true,
-        disconnectOnDispose = false,
-    ) { room ->
+    val session = rememberSession(
+        tokenSource = viewModel.tokenSource,
+        options = SessionOptions(
+            room = viewModel.room
+        )
+    )
 
+    val context = LocalContext.current
+
+    SessionScope(session = session) { session ->
+
+        // Start the session.
+        LaunchedEffect(Unit) {
+            val result = session.start()
+
+            // Handle if the session fails to connect.
+            if (result.isFailure) {
+                Toast.makeText(context, "Error connecting to the session.", Toast.LENGTH_SHORT).show()
+                onEndCall()
+            }
+        }
+
+        // End the session when leaving the screen.
+        DisposableEffect(Unit) {
+            onDispose {
+                session.end()
+            }
+        }
+
+        val room = requireRoom()
         var chatVisible by remember { mutableStateOf(false) }
 
-        val isMicEnabled by room.localParticipant::isMicrophoneEnabled.flow.collectAsState()
-        val isCameraEnabled by room.localParticipant::isCameraEnabled.flow.collectAsState()
-        val isScreenShareEnabled by room.localParticipant::isScreenShareEnabled.flow.collectAsState()
-        val transcriptionsState = rememberTranscriptions(room)
+        // LocalMedia provides state information about the user's local devices
+        val localMedia = rememberLocalMedia()
+        val isMicEnabled = localMedia.isMicrophoneEnabled
+        val isCameraEnabled = localMedia.isCameraEnabled
+        val isScreenShareEnabled = localMedia.isScreenShareEnabled
+
+        // SessionMessages handles all transcriptions and chat messages
+        val sessionMesages = rememberSessionMessages()
+
+        // Agent provides state information about the agent participant.
+        val agent = rememberAgent()
 
         val constraints = getConstraints(chatVisible, isCameraEnabled, isScreenShareEnabled)
         ConstraintLayout(
@@ -118,7 +150,7 @@ fun VoiceAssistant(
 
             ChatLog(
                 room = room,
-                transcriptions = transcriptionsState.transcriptions.value,
+                messages = sessionMesages.messages,
                 modifier = Modifier.layoutId(LAYOUT_ID_CHAT_LOG)
             )
 
@@ -130,17 +162,7 @@ fun VoiceAssistant(
                 onValueChange = { message = it },
                 onChatSend = { msg ->
                     coroutineScope.launch {
-                        val sender = room.localParticipant.streamText(
-                            StreamTextOptions(
-                                operationType = TextStreamInfo.OperationType.CREATE,
-                                topic = "lk.chat"
-                            )
-                        )
-                        sender.write(msg)
-                        sender.close()
-
-                        val identity = room.localParticipant.identity ?: return@launch
-                        transcriptionsState.addTranscription(identity, msg)
+                        sessionMesages.send(msg)
                     }
                     message = ""
                 },
@@ -148,10 +170,9 @@ fun VoiceAssistant(
             )
 
             // Amplitude visualization of the Assistant's voice track.
-            val voiceAssistant = rememberVoiceAssistant()
             val agentBorderAlpha by animateFloatAsState(if (chatVisible) 1f else 0f, label = "agentBorderAlpha")
             AgentVisualization(
-                voiceAssistant = voiceAssistant,
+                agent = agent,
                 modifier = Modifier
                     .layoutId(LAYOUT_ID_AGENT)
                     .clip(RoundedCornerShape(8.dp))
@@ -169,19 +190,20 @@ fun VoiceAssistant(
                     coroutineScope.launch {
                         // Agents only support one video stream at a time.
                         requestedVideo = false
-                        room.localParticipant.setScreenShareEnabled(true, ScreenCaptureParams(data))
+                        localMedia.startScreenShare(ScreenCaptureParams(data))
                     }
                 }
 
             ControlBar(
                 isMicEnabled = isMicEnabled,
                 onMicClick = { requestedAudio = !requestedAudio },
+                localAudioTrack = localMedia.microphoneTrack,
                 isCameraEnabled = isCameraEnabled,
                 onCameraClick = {
                     requestedVideo = !requestedVideo
                     if (requestedVideo) {
                         // Agents only support one video stream at a time.
-                        coroutineScope.launch { room.localParticipant.setScreenShareEnabled(false) }
+                        coroutineScope.launch { localMedia.stopScreenShare() }
                     }
                 },
                 isScreenShareEnabled = isScreenShareEnabled,
@@ -191,7 +213,7 @@ fun VoiceAssistant(
                         val mediaProjectionManager = context.getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
                         screenSharePermissionLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
                     } else {
-                        coroutineScope.launch { room.localParticipant.setScreenShareEnabled(false) }
+                        coroutineScope.launch { localMedia.stopScreenShare() }
                     }
                 },
                 isChatEnabled = chatVisible,
@@ -202,23 +224,15 @@ fun VoiceAssistant(
             )
 
             val cameraAlpha by animateFloatAsState(targetValue = if (isCameraEnabled) 1f else 0f, label = "Camera Alpha")
-            val cameraTrack = rememberParticipantTrackReferences(
-                listOf(Track.Source.CAMERA),
-                passedParticipant = room.localParticipant
-            ).firstOrNull()
             Box(
                 modifier = Modifier
                     .layoutId(LAYOUT_ID_CAMERA)
-                    .clickable {
-                        room.localParticipant
-                            .getOrCreateDefaultVideoTrack()
-                            .switchCamera()
-                    }
+                    .clickable { localMedia.switchCamera() }
                     .clip(RoundedCornerShape(8.dp))
                     .alpha(cameraAlpha)
             ) {
                 VideoTrackView(
-                    trackReference = cameraTrack,
+                    trackReference = localMedia.cameraTrack,
                     modifier = Modifier.fillMaxSize()
                 )
 
@@ -241,12 +255,8 @@ fun VoiceAssistant(
             }
 
             val screenShareAlpha by animateFloatAsState(targetValue = if (isScreenShareEnabled) 1f else 0f, label = "Screen Share Alpha")
-            val screenShareTrack = rememberParticipantTrackReferences(
-                listOf(Track.Source.SCREEN_SHARE),
-                passedParticipant = room.localParticipant
-            ).firstOrNull()
             VideoTrackView(
-                trackReference = screenShareTrack,
+                trackReference = localMedia.screenShareTrack,
                 modifier = Modifier
                     .layoutId(LAYOUT_ID_SCREENSHARE)
                     .clip(RoundedCornerShape(8.dp))

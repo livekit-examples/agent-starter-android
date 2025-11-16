@@ -22,13 +22,11 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import io.livekit.android.annotations.Beta
-import io.livekit.android.compose.state.VoiceAssistant
-import io.livekit.android.compose.state.rememberParticipantTrackReferences
+import io.livekit.android.compose.state.Agent
 import io.livekit.android.compose.ui.ScaleType
 import io.livekit.android.compose.ui.VideoTrackView
 import io.livekit.android.compose.ui.audio.VoiceAssistantBarVisualizer
 import io.livekit.android.example.voiceassistant.ui.anim.CircleReveal
-import io.livekit.android.room.track.Track
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -38,39 +36,11 @@ val hideSpringSpec = spring<Float>(stiffness = Spring.StiffnessMedium)
 @OptIn(Beta::class)
 @Composable
 fun AgentVisualization(
-    voiceAssistant: VoiceAssistant,
+    agent: Agent,
     modifier: Modifier = Modifier
 ) {
 
-    // TODO: REMOVE
-    // For non agent testing
-//    val room = requireRoom()
-//    val participants by room::remoteParticipants.flow.collectAsState()
-//    val participant = participants.values.firstOrNull()
-//    val videoTrack: TrackReference?
-//    if (participant != null) {
-//        val agentIdentity by participant::identity.flow.collectAsState()
-//        if (agentIdentity != null) {
-//            videoTrack = rememberParticipantTrackReferences(
-//                sources = listOf(Track.Source.CAMERA),
-//                participantIdentity = agentIdentity,
-//            ).firstOrNull()
-//        } else {
-//            videoTrack = null
-//        }
-//    } else {
-//        videoTrack = null
-//    }
-    val agentIdentity = voiceAssistant.agent?.identity
-
-    val videoTrack = if (agentIdentity != null) {
-        rememberParticipantTrackReferences(
-            sources = listOf(Track.Source.CAMERA),
-            participantIdentity = agentIdentity,
-        ).firstOrNull()
-    } else {
-        null
-    }
+    val videoTrack = agent.videoTrack
 
     var hasFirstFrameRendered by remember(videoTrack) { mutableStateOf(false) }
     val revealed = videoTrack != null && hasFirstFrameRendered
@@ -111,7 +81,8 @@ fun AgentVisualization(
                         }
                     }
                     VoiceAssistantBarVisualizer(
-                        voiceAssistant = voiceAssistant,
+                        agentState = agent.agentState,
+                        audioTrackRef = agent.audioTrack,
                         barCount = 5,
                         minHeight = barMinHeightPercent,
                         barWidth = barWidth,

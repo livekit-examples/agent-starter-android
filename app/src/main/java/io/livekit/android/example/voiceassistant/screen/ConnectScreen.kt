@@ -20,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -39,23 +38,19 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.livekit.android.example.voiceassistant.R
-import io.livekit.android.example.voiceassistant.retrieveToken
+import io.livekit.android.example.voiceassistant.hardcodedToken
+import io.livekit.android.example.voiceassistant.hardcodedUrl
+import io.livekit.android.example.voiceassistant.sandboxID
 import io.livekit.android.example.voiceassistant.ui.theme.Blue500
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-
 
 @Serializable
 object ConnectRoute
 
 @Composable
 fun ConnectScreen(
-    navigateToVoiceAssistant: (url: String, token: String) -> Unit
+    navigateToVoiceAssistant: (VoiceAssistantRoute) -> Unit
 ) {
-
-    val coroutineScope = rememberCoroutineScope { Dispatchers.IO }
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -108,25 +103,13 @@ fun ConnectScreen(
                 colors = buttonColors,
                 shape = RoundedCornerShape(20),
                 onClick = {
-                    isConnecting = true
-                    hasError = false
-                    coroutineScope.launch {
-                        var connected = false
-                        try {
-                            delay(1000)
-                            val connectionDetails = retrieveToken()
-                            navigateToVoiceAssistant(connectionDetails.serverUrl, connectionDetails.participantToken)
-                            connected = true
-                        } catch (exception: Exception) {
-                            hasError = true
-                        } finally {
-                            if (connected) {
-                                // Add a delay so it updates after navigation
-                                delay(1000)
-                            }
-                            isConnecting = false
-                        }
-                    }
+                    // Token source details from TokenExt.kt
+                    val route = VoiceAssistantRoute(
+                        sandboxId = sandboxID,
+                        hardcodedUrl = hardcodedUrl,
+                        hardcodedToken = hardcodedToken
+                    )
+                    navigateToVoiceAssistant(route)
                 }
             ) {
 
