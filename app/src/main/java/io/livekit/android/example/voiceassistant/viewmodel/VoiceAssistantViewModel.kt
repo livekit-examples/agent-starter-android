@@ -7,6 +7,7 @@ import androidx.navigation.toRoute
 import io.livekit.android.LiveKit
 import io.livekit.android.example.voiceassistant.screen.VoiceAssistantRoute
 import io.livekit.android.token.TokenSource
+import io.livekit.android.token.cached
 
 /**
  * This ViewModel handles holding onto the Room object, so that it is
@@ -22,9 +23,9 @@ class VoiceAssistantViewModel(application: Application, savedStateHandle: SavedS
         val (sandboxId, url, token) = savedStateHandle.toRoute<VoiceAssistantRoute>()
 
         tokenSource = if (sandboxId.isNotEmpty()) {
-            TokenSource.fromSandboxTokenServer(sandboxId = sandboxId)
+            TokenSource.fromSandboxTokenServer(sandboxId = sandboxId).cached()
         } else {
-            TokenSource.fromLiteral(url, token)
+            TokenSource.fromLiteral(url, token).cached()
         }
     }
 
