@@ -54,6 +54,8 @@ import io.livekit.android.compose.state.rememberLocalMedia
 import io.livekit.android.compose.state.rememberSession
 import io.livekit.android.compose.state.rememberSessionMessages
 import io.livekit.android.compose.ui.VideoTrackView
+import io.livekit.android.example.voiceassistant.rememberCanEnableCamera
+import io.livekit.android.example.voiceassistant.rememberCanEnableMic
 import io.livekit.android.example.voiceassistant.requirePermissions
 import io.livekit.android.example.voiceassistant.ui.AgentVisualization
 import io.livekit.android.example.voiceassistant.ui.ChatBar
@@ -96,6 +98,9 @@ fun VoiceAssistant(
 
     requirePermissions(requestedAudio, requestedVideo)
 
+    val canEnableMic by rememberCanEnableMic()
+    val canEnableVideo by rememberCanEnableCamera()
+
     val session = rememberSession(
         tokenSource = viewModel.tokenSource,
         options = SessionOptions(
@@ -107,8 +112,13 @@ fun VoiceAssistant(
 
     SessionScope(session = session) { session ->
 
-        // Start the session.
-        LaunchedEffect(Unit) {
+        // Start the session when we have at least microphone permissions.
+        // Permission removals kill the app, so this is a one-way transition.
+        LaunchedEffect(canEnableMic) {
+            if (!canEnableMic) {
+                return@LaunchedEffect
+            }
+
             val result = session.start()
 
             // Handle if the session fails to connect.
@@ -130,12 +140,22 @@ fun VoiceAssistant(
 
         // LocalMedia provides state information about the user's local devices
         val localMedia = rememberLocalMedia()
-        val isMicEnabled = localMedia.isMicrophoneEnabled
-        val isCameraEnabled = localMedia.isCameraEnabled
-        val isScreenShareEnabled = localMedia.isScreenShareEnabled
+        val isMicEnabled by localMedia::isMicrophoneEnabled
+        val isCameraEnabled by localMedia::isCameraEnabled
+        val isScreenShareEnabled by localMedia::isScreenShareEnabled
+
+        LaunchedEffect(canEnableMic, requestedAudio) {
+            session.waitUntilConnected()
+            localMedia.setMicrophoneEnabled(canEnableMic && requestedAudio)
+        }
+
+        LaunchedEffect(canEnableVideo, requestedVideo) {
+            session.waitUntilConnected()
+            localMedia.setCameraEnabled(canEnableVideo && requestedVideo)
+        }
 
         // SessionMessages handles all transcriptions and chat messages
-        val sessionMesages = rememberSessionMessages()
+        val sessionMessages = rememberSessionMessages()
 
         // Agent provides state information about the agent participant.
         val agent = rememberAgent()
@@ -150,7 +170,7 @@ fun VoiceAssistant(
 
             ChatLog(
                 room = room,
-                messages = sessionMesages.messages,
+                messages = sessionMessages.messages,
                 modifier = Modifier.layoutId(LAYOUT_ID_CHAT_LOG)
             )
 
@@ -162,7 +182,7 @@ fun VoiceAssistant(
                 onValueChange = { message = it },
                 onChatSend = { msg ->
                     coroutineScope.launch {
-                        sessionMesages.send(msg)
+                        sessionMessages.send(msg)
                     }
                     message = ""
                 },
@@ -190,7 +210,7 @@ fun VoiceAssistant(
                     coroutineScope.launch {
                         // Agents only support one video stream at a time.
                         requestedVideo = false
-                        localMedia.startScreenShare(ScreenCaptureParams(data))
+                        localMedia.setScreenShareEnabled(true, ScreenCaptureParams(data))
                     }
                 }
 
@@ -203,7 +223,7 @@ fun VoiceAssistant(
                     requestedVideo = !requestedVideo
                     if (requestedVideo) {
                         // Agents only support one video stream at a time.
-                        coroutineScope.launch { localMedia.stopScreenShare() }
+                        coroutineScope.launch { localMedia.setScreenShareEnabled(false) }
                     }
                 },
                 isScreenShareEnabled = isScreenShareEnabled,
@@ -213,7 +233,7 @@ fun VoiceAssistant(
                         val mediaProjectionManager = context.getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
                         screenSharePermissionLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
                     } else {
-                        coroutineScope.launch { localMedia.stopScreenShare() }
+                        coroutineScope.launch { localMedia.setScreenShareEnabled(false) }
                     }
                 },
                 isChatEnabled = chatVisible,
