@@ -24,7 +24,7 @@ jobs:
         working-directory: ./components-android
     steps:
     - name: checkout components-android
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         path: ./components-android
         submodules: recursive
