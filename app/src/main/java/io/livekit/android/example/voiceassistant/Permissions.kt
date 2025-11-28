@@ -2,6 +2,7 @@ package io.livekit.android.example.voiceassistant
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -33,19 +34,19 @@ fun requirePermissions(microphone: Boolean, camera: Boolean): MultiplePermission
 }
 
 /**
- * @return true if both enabled is true and the camera permission is granted.
+ * @return true if the camera permission is granted.
  */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun rememberEnableCamera(enabled: Boolean): Boolean {
+fun rememberCanEnableCamera(): State<Boolean> {
     val permissionState = rememberPermissionState(
         android.Manifest.permission.CAMERA
     )
-    return remember(enabled, permissionState) {
+    return remember {
         derivedStateOf {
-            enabled && permissionState.status.isGranted
+            permissionState.status.isGranted
         }
-    }.value
+    }
 }
 
 /**
@@ -53,13 +54,13 @@ fun rememberEnableCamera(enabled: Boolean): Boolean {
  */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun rememberEnableMic(enabled: Boolean): Boolean {
+fun rememberCanEnableMic(): State<Boolean> {
     val micPermissionState = rememberPermissionState(
         android.Manifest.permission.RECORD_AUDIO
     )
-    return remember(enabled, micPermissionState) {
+    return remember(micPermissionState) {
         derivedStateOf {
-            enabled && micPermissionState.status.isGranted
+            micPermissionState.status.isGranted
         }
-    }.value
+    }
 }
