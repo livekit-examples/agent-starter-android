@@ -36,7 +36,7 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 livekit-lib = { group = "io.livekit", name = "livekit-android", version = "2.23.1" }
-livekit-components = { group = "io.livekit", name = "livekit-android-compose-components", version = "2.1.1" }
+livekit-components = { group = "io.livekit", name = "livekit-android-compose-components", version = "2.1.2" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 timberkt = { module = "com.github.ajalt:timberkt", version.ref = "timberkt" }
