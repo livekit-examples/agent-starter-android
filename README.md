@@ -23,7 +23,7 @@ Build and run the app in Android Studio.
 You'll also need an agent to speak with. Try our starter agent for [Python](https://github.com/livekit-examples/agent-starter-python), [Node.js](https://github.com/livekit-examples/agent-starter-node), or [create your own from scratch](https://docs.livekit.io/agents/start/voice-ai/).
 
 > [!NOTE]
-> To setup without the LiveKit CLI, clone the repository and edit the `TokenExt.kt` file to add either a `sandboxID` (from your project's **Options** at the [Settings](https://cloud.livekit.io/projects/p_/settings/project) page), or a [manually generated](#token-generation) URL and token.
+> To setup without the LiveKit CLI, clone the repository and edit the `TokenExt.kt` file to add either a `sandboxID` (from your project's **Options** on the [Settings](https://cloud.livekit.io/projects/p_/settings/project) page), or a [manually generated](#token-generation) URL and token.
 
 ## Token generation
 
