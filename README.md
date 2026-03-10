@@ -10,7 +10,7 @@ This template is free for you to use or modify as you see fit.
 
 The easiest way to get this app running is with a [token server](https://docs.livekit.io/frontends/authentication/tokens/sandbox-token-server/) and the [LiveKit CLI](https://docs.livekit.io/home/cli/cli-setup/).
 
-First, enable the token server from your project's **Options** at the [Settings](https://cloud.livekit.io/projects/p_/settings/project) page in LiveKit Cloud and copy the `sandboxID`.
+First, enable the token server from your project's **Options** on the [Settings](https://cloud.livekit.io/projects/p_/settings/project) page in LiveKit Cloud and copy the `sandboxID`.
 
 Then, run the following command to automatically clone this template and connect it to LiveKit Cloud:
 
