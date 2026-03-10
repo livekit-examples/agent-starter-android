@@ -7,8 +7,8 @@ This is a starter template for [LiveKit Agents](https://docs.livekit.io/agents/o
 This template is free for you to use or modify as you see fit.
 
 ## Getting started
-
-The easiest way to get this app running is with a sandbox token server and the [LiveKit CLI](https://docs.livekit.io/home/cli/cli-setup/).
+ 
+The easiest way to get this app running is with a [Token Server for LiveKit Cloud](https://cloud.livekit.io/projects/p_/settings/project) and the [LiveKit CLI](https://docs.livekit.io/home/cli/cli-setup/).
 
 First, enable the token server from your project's [Settings](https://cloud.livekit.io/projects/p_/settings/project) page in LiveKit Cloud and copy the sandbox ID.
 
