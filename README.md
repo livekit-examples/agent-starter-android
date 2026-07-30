@@ -14,7 +14,9 @@ The easiest way to get this app running is with the [LiveKit CLI](https://docs.l
 lk app create --template agent-starter-android
 ```
 
-Build and run the app in Android Studio.
+Build and run the app in Android Studio. 
+
+The app is configured to connect to the LiveKit homepage agent by default, which you can also try at [livekit.com](https://www.livekit.com). To point the app at your own agent, see [Connect to your agent](https://github.com/livekit-examples/agent-starter-android#connect-to-your-agent).
 
 > [!NOTE]
 > To set up without the LiveKit CLI, clone the repository via git.
