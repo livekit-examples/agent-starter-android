@@ -40,8 +40,8 @@ import androidx.compose.ui.unit.sp
 import io.livekit.android.example.voiceassistant.R
 import io.livekit.android.example.voiceassistant.hardcodedToken
 import io.livekit.android.example.voiceassistant.hardcodedUrl
-import io.livekit.android.example.voiceassistant.sandboxID
 import io.livekit.android.example.voiceassistant.homepageAgentEndpoint
+import io.livekit.android.example.voiceassistant.sandboxID
 import io.livekit.android.example.voiceassistant.ui.theme.Blue500
 import kotlinx.serialization.Serializable
 
