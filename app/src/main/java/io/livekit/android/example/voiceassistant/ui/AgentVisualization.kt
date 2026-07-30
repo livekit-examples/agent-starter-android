@@ -1,13 +1,17 @@
 package io.livekit.android.example.voiceassistant.ui
 
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -17,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -80,22 +85,37 @@ fun AgentVisualization(
                             return@derivedStateOf max(0f, (widthPx / height))
                         }
                     }
-                    VoiceAssistantBarVisualizer(
-                        agentState = agent.agentState,
-                        audioTrackRef = agent.audioTrack,
-                        barCount = 5,
-                        minHeight = barMinHeightPercent,
-                        barWidth = barWidth,
-                        brush = SolidColor(MaterialTheme.colorScheme.onBackground),
-                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                        modifier = Modifier
-                            .fillMaxWidth(0.75f)
-                            .fillMaxHeight(0.22f)
-                            .onSizeChanged { size ->
-                                width = size.width
-                                height = size.height
-                            }
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        VoiceAssistantBarVisualizer(
+                            agentState = agent.agentState,
+                            audioTrackRef = agent.audioTrack,
+                            barCount = 5,
+                            minHeight = barMinHeightPercent,
+                            barWidth = barWidth,
+                            brush = SolidColor(MaterialTheme.colorScheme.onBackground),
+                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                            modifier = Modifier
+                                .fillMaxWidth(0.75f)
+                                .fillMaxHeight(0.22f)
+                                .onSizeChanged { size ->
+                                    width = size.width
+                                    height = size.height
+                                }
+                        )
+
+                        val waitingAlpha by animateFloatAsState(
+                            targetValue = if (agent.isAvailable) 0f else 1f,
+                            label = "waitingAlpha"
+                        )
+                        Text(
+                            text = "Waiting for agent",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                            modifier = Modifier
+                                .padding(top = 16.dp)
+                                .alpha(waitingAlpha)
+                        )
+                    }
                 }
             },
             modifier = Modifier.fillMaxSize(),
