@@ -24,9 +24,9 @@ class VoiceAssistantViewModel(application: Application, savedStateHandle: SavedS
         val (sandboxId, url, token, homepageAgentEndpoint) = savedStateHandle.toRoute<VoiceAssistantRoute>()
 
         tokenSource = if (sandboxId.isNotEmpty()) {
-            TokenSource.fromSandboxTokenServer(sandboxId = sandboxId).cached()
+            TokenSource.fromSandboxTokenServer(sandboxId = sandboxId)
         } else if (url.isNotEmpty() && token.isNotEmpty()){
-            TokenSource.fromLiteral(url, token).cached()
+            TokenSource.fromLiteral(url, token)
         } else {
             TokenSource.fromEndpoint(URI(homepageAgentEndpoint).toURL())
         }
