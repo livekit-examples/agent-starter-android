@@ -8,3 +8,6 @@ const val sandboxID = ""
 // and using one of your API Keys to generate a token with custom TTL and permissions.
 const val hardcodedUrl = ""
 const val hardcodedToken = ""
+
+// Fallback: if other connection details are empty, connect to the homepage agent.
+const val homepageAgentEndpoint = "https://livekit.com/api/homepage-agent/token"
