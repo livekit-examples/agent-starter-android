@@ -104,7 +104,7 @@ fun AgentVisualization(
                         )
 
                         val waitingAlpha by animateFloatAsState(
-                            targetValue = if (agent.isAvailable) 0f else 1f,
+                            targetValue = if (agent.isConnected) 0f else 1f,
                             label = "waitingAlpha"
                         )
                         Text(
