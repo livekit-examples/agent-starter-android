@@ -1,13 +1,14 @@
 package io.livekit.android.example.voiceassistant.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.toRoute
 import io.livekit.android.LiveKit
 import io.livekit.android.example.voiceassistant.screen.VoiceAssistantRoute
 import io.livekit.android.token.TokenSource
-import io.livekit.android.token.cached
+import java.net.URI
 
 /**
  * This ViewModel handles holding onto the Room object, so that it is
@@ -20,12 +21,17 @@ class VoiceAssistantViewModel(application: Application, savedStateHandle: SavedS
     val tokenSource: TokenSource
 
     init {
-        val (sandboxId, url, token) = savedStateHandle.toRoute<VoiceAssistantRoute>()
+        val (sandboxId, url, token, homepageAgentEndpoint) = savedStateHandle.toRoute<VoiceAssistantRoute>()
 
         tokenSource = if (sandboxId.isNotEmpty()) {
-            TokenSource.fromSandboxTokenServer(sandboxId = sandboxId).cached()
+            TokenSource.fromSandboxTokenServer(sandboxId = sandboxId)
+        } else if (url.isNotEmpty() && token.isNotEmpty()) {
+            TokenSource.fromLiteral(url, token)
         } else {
-            TokenSource.fromLiteral(url, token).cached()
+            if (url.isNotEmpty() || token.isNotEmpty()) {
+                Log.w(TAG, "hardcodedUrl and hardcodedToken must both be set; falling back to the homepage agent.")
+            }
+            TokenSource.fromEndpoint(URI(homepageAgentEndpoint).toURL())
         }
     }
 
@@ -33,5 +39,9 @@ class VoiceAssistantViewModel(application: Application, savedStateHandle: SavedS
         super.onCleared()
         room.disconnect()
         room.release()
+    }
+
+    companion object {
+        private const val TAG = "VoiceAssistantViewModel"
     }
 }
