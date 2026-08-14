@@ -21,10 +21,10 @@ class VoiceAssistantViewModel(application: Application, savedStateHandle: SavedS
     val tokenSource: TokenSource
 
     init {
-        val (sandboxId, url, token, homepageAgentEndpoint) = savedStateHandle.toRoute<VoiceAssistantRoute>()
+        val (tokenServerId, url, token, homepageAgentEndpoint) = savedStateHandle.toRoute<VoiceAssistantRoute>()
 
-        tokenSource = if (sandboxId.isNotEmpty()) {
-            TokenSource.fromSandboxTokenServer(sandboxId = sandboxId)
+        tokenSource = if (tokenServerId.isNotEmpty()) {
+            TokenSource.fromDevelopmentTokenServer(tokenServerId = tokenServerId)
         } else if (url.isNotEmpty() && token.isNotEmpty()) {
             TokenSource.fromLiteral(url, token)
         } else {

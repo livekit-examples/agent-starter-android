@@ -69,7 +69,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class VoiceAssistantRoute(
-    val sandboxId: String,
+    val tokenServerId: String,
     val hardcodedUrl: String,
     val hardcodedToken: String,
     val homepageAgentEndpoint: String
