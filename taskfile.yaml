@@ -7,11 +7,11 @@ tasks:
     vars:
       TOKEN_FILE: "app/src/main/java/io/livekit/android/example/voiceassistant/TokenExt.kt"
     cmds:
-      - echo -e "Setting up sandbox..."
+      - echo -e "Setting up token server..."
       - platforms: [darwin]
-        cmd: sed -i "" "s/sandboxID = \"\"/sandboxID = \"{{.LIVEKIT_SANDBOX_ID}}\"/g" "{{.ROOT_DIR}}/{{.TOKEN_FILE}}"
+        cmd: sed -i "" "s/tokenServerId = \"\"/tokenServerId = \"{{.LIVEKIT_SANDBOX_ID}}\"/g" "{{.ROOT_DIR}}/{{.TOKEN_FILE}}"
       - platforms: [linux, windows]
-        cmd: sed -i "s/sandboxID = \"\"/sandboxID = \"{{.LIVEKIT_SANDBOX_ID}}\"/g" "{{.ROOT_DIR}}/{{.TOKEN_FILE}}"
+        cmd: sed -i "s/tokenServerId = \"\"/tokenServerId = \"{{.LIVEKIT_SANDBOX_ID}}\"/g" "{{.ROOT_DIR}}/{{.TOKEN_FILE}}"
       - echo -e "\nYour Android agent example project is ready to go!\n"
       - echo -e "To give it a try, open the project in Android Studio and run the app."
       - echo -e "\nFor more help view your project's README.md file or join our Slack community at https://livekit.io/join-slack."
