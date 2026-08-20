@@ -1,7 +1,7 @@
 [versions]
 accompanistPermissions = "0.37.3"
 agp = "8.13.0"
-constraintlayoutCompose = "1.1.1"
+constraintlayoutCompose = "1.1.2"
 kotlin = "2.2.20"
 coreKtx = "1.17.0"
 junit = "4.13.2"
