@@ -1,86 +1,119 @@
 package io.livekit.android.example.voiceassistant.ui
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import io.livekit.android.compose.types.ReceivedMessage
-import io.livekit.android.room.Room
+import io.livekit.android.example.voiceassistant.realtime.DeliveryState
+import io.livekit.android.example.voiceassistant.realtime.MessageRole
+import io.livekit.android.example.voiceassistant.realtime.MessageSource
+import io.livekit.android.example.voiceassistant.realtime.TimelineMessage
 
 @Composable
-fun ChatLog(room: Room, messages: List<ReceivedMessage>, modifier: Modifier = Modifier) {
-    Box(modifier = modifier) {
-        // Get and display the transcriptions.
-        val displayTranscriptions = messages.asReversed()
-        val lazyListState = rememberLazyListState()
+fun ChatLog(
+    messages: List<TimelineMessage>,
+    working: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val listState = rememberLazyListState()
+    LaunchedEffect(messages.size, messages.lastOrNull()?.text) {
+        if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+    }
 
-        // Scroll to bottom when new transcriptions come in.
-        LaunchedEffect(messages.count()) {
-            lazyListState.animateScrollToItem(0)
-        }
-        LazyColumn(
-            userScrollEnabled = true,
-            state = lazyListState,
-            reverseLayout = true,
-            modifier = modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
-                .drawWithContent {
-                    // Fade top
-                    val colors = arrayOf(
-                        0.0f to Color.Transparent,
-                        0.15f to Color.Black,
-                        1.0f to Color.Black,
-                    )
-                    drawContent()
-                    drawRect(
-                        brush = Brush.verticalGradient(
-                            colorStops = colors
-                        ),
-                        blendMode = BlendMode.DstIn
-                    )
-                }
-        ) {
-            items(
-                items = displayTranscriptions,
-                key = { transcription -> transcription.id },
-            ) { message ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .animateItem()
-                ) {
-                    if (message.fromParticipant?.identity == room.localParticipant.identity) {
-                        UserMessage(
-                            message = message,
-                            modifier = Modifier.align(Alignment.CenterEnd)
-                        )
-                    } else {
-                        // Agent transcription or chat message
-                        Text(
-                            text = message.message,
-                            modifier = Modifier.align(Alignment.CenterStart)
-                        )
-                    }
-                }
+    LazyColumn(
+        state = listState,
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        items(messages, key = TimelineMessage::id) { message ->
+            if (message.source == MessageSource.STATUS) {
+                StatusChip(message)
+            } else {
+                MessageBubble(message)
             }
+        }
+        if (working) {
+            item(key = "working") {
+                Text(
+                    text = "Hermes is working…",
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MessageBubble(message: TimelineMessage) {
+    val isUser = message.role == MessageRole.USER
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
+    ) {
+        Surface(
+            color = if (isUser) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            },
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.fillMaxWidth(0.86f)
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                Text(message.text, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    text = buildString {
+                        append(
+                            when (message.source) {
+                                MessageSource.TEXT -> "TEXT"
+                                MessageSource.VOICE -> "VOICE"
+                                MessageSource.HERMES -> "HERMES"
+                                MessageSource.STATUS -> "STATUS"
+                            }
+                        )
+                        if (!message.isFinal) append(" · streaming")
+                        if (message.delivery == DeliveryState.PENDING) append(" · sending")
+                        if (message.delivery == DeliveryState.FAILED) append(" · failed")
+                    },
+                    modifier = Modifier.align(Alignment.End),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusChip(message: TimelineMessage) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+        Surface(
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            shape = RoundedCornerShape(50)
+        ) {
+            Text(
+                text = message.text,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                style = MaterialTheme.typography.labelMedium
+            )
         }
     }
 }

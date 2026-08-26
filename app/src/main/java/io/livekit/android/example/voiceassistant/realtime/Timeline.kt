@@ -57,7 +57,8 @@ sealed interface TimelineUpdate {
         val text: String,
         val isFinal: Boolean,
         val timestampMs: Long,
-        val isUser: Boolean = true
+        val isUser: Boolean = true,
+        val localId: String? = null
     ) : TimelineUpdate
 
     data class Transcript(
@@ -105,14 +106,18 @@ fun reduceTimeline(
         transform = { it.copy(delivery = DeliveryState.FAILED) }
     )
     is TimelineUpdate.RemoteText -> {
-        val existing = current.indexOfFirst { it.transportId == update.transportId }
+        val existing = current.indexOfFirst {
+            it.transportId == update.transportId ||
+                (update.localId != null && it.id == localMessageId(update.localId))
+        }
         if (existing >= 0) {
             current.replaceAt(
                 existing,
                 current[existing].copy(
                     text = update.text,
                     isFinal = update.isFinal,
-                    delivery = DeliveryState.SENT
+                    delivery = DeliveryState.SENT,
+                    transportId = update.transportId
                 )
             )
         } else {

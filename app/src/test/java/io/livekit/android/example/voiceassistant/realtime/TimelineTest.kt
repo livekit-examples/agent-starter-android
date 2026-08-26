@@ -114,4 +114,29 @@ class TimelineTest {
         assertEquals(1, timeline.size)
         assertEquals(DeliveryState.SENT, timeline.single().delivery)
     }
+
+    @Test
+    fun transportEchoCanArriveBeforeSendCompletionWithoutDuplicate() {
+        var timeline = reduceTimeline(
+            emptyList(),
+            TimelineUpdate.LocalText("local-1", "hello", 10)
+        )
+        timeline = reduceTimeline(
+            timeline,
+            TimelineUpdate.RemoteText(
+                transportId = "stream-7",
+                text = "hello",
+                isFinal = true,
+                timestampMs = 11,
+                localId = "local-1"
+            )
+        )
+        timeline = reduceTimeline(
+            timeline,
+            TimelineUpdate.TextSent("local-1", "stream-7", 12)
+        )
+
+        assertEquals(1, timeline.size)
+        assertEquals("stream-7", timeline.single().transportId)
+    }
 }
