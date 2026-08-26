@@ -48,6 +48,8 @@ import io.livekit.android.compose.local.SessionScope
 import io.livekit.android.compose.local.requireRoom
 import io.livekit.android.compose.state.Agent
 import io.livekit.android.compose.state.Session
+import io.livekit.android.compose.state.SessionConnectOptions
+import io.livekit.android.compose.state.SessionConnectTrackOptions
 import io.livekit.android.compose.state.SessionMessages
 import io.livekit.android.compose.state.SessionOptions
 import io.livekit.android.compose.state.rememberAgent
@@ -108,7 +110,7 @@ interface HermesSessionController {
     val isConnected: Boolean
     val isReconnecting: Boolean
 
-    suspend fun start()
+    suspend fun start(microphoneEnabled: Boolean)
 
     suspend fun setMicrophoneEnabled(enabled: Boolean)
 
@@ -142,8 +144,15 @@ private class LiveKitHermesSessionController(
     override val isReconnecting: Boolean
         get() = session.isReconnecting
 
-    override suspend fun start() {
-        session.start().getOrThrow()
+    override suspend fun start(microphoneEnabled: Boolean) {
+        session.start(
+            SessionConnectOptions(
+                tracks = SessionConnectTrackOptions(
+                    microphoneEnabled = microphoneEnabled,
+                    usePreconnectBuffer = microphoneEnabled
+                )
+            )
+        ).getOrThrow()
     }
 
     override suspend fun setMicrophoneEnabled(enabled: Boolean) {
@@ -346,7 +355,7 @@ fun HermesScreen(
 
     LaunchedEffect(Unit) {
         runCatching {
-            controller.start()
+            controller.start(microphoneEnabled = false)
             controller.setAgentVolume(0.0)
         }.onFailure(onConnectionError)
     }

@@ -94,7 +94,7 @@ class HermesChatUiTest {
         override val isConnected = true
         override val isReconnecting = false
 
-        override suspend fun start() = Unit
+        override suspend fun start(microphoneEnabled: Boolean) = Unit
 
         override suspend fun setMicrophoneEnabled(enabled: Boolean) {
             micStates += enabled

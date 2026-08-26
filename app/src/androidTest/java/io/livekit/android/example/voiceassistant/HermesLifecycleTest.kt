@@ -25,18 +25,21 @@ class HermesLifecycleTest {
         composeRule.onNodeWithText("CALL HERMES").assertExists()
         composeRule.onNodeWithText("মাইক্রোফোন বন্ধ").assertExists()
         assertEquals(1, controller.startCalls)
+        assertEquals(false, controller.startMicrophoneEnabled)
         assertEquals(0, controller.enableMicCalls)
     }
 
     private class FakeHermesSessionController : HermesSessionController {
         var startCalls = 0
+        var startMicrophoneEnabled: Boolean? = null
         var enableMicCalls = 0
 
         override val isConnected = false
         override val isReconnecting = false
 
-        override suspend fun start() {
+        override suspend fun start(microphoneEnabled: Boolean) {
             startCalls += 1
+            startMicrophoneEnabled = microphoneEnabled
         }
 
         override suspend fun setMicrophoneEnabled(enabled: Boolean) {
