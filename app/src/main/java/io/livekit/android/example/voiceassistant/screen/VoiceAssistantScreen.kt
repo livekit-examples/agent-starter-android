@@ -1,26 +1,31 @@
 package io.livekit.android.example.voiceassistant.screen
 
-import android.app.Activity
-import android.content.Context.MEDIA_PROJECTION_SERVICE
-import android.media.projection.MediaProjectionManager
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cameraswitch
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.CallEnd
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MicOff
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -28,62 +33,175 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.constraintlayout.compose.ChainStyle
-import androidx.constraintlayout.compose.ConstrainScope
-import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.constraintlayout.compose.ConstraintSet
-import androidx.constraintlayout.compose.Dimension
-import androidx.constraintlayout.compose.Visibility
-import androidx.constraintlayout.compose.layoutId
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import io.livekit.android.annotations.Beta
 import io.livekit.android.compose.local.SessionScope
 import io.livekit.android.compose.local.requireRoom
+import io.livekit.android.compose.state.Agent
+import io.livekit.android.compose.state.Session
+import io.livekit.android.compose.state.SessionConnectOptions
+import io.livekit.android.compose.state.SessionConnectTrackOptions
+import io.livekit.android.compose.state.SessionMessages
 import io.livekit.android.compose.state.SessionOptions
 import io.livekit.android.compose.state.rememberAgent
 import io.livekit.android.compose.state.rememberLocalMedia
 import io.livekit.android.compose.state.rememberSession
 import io.livekit.android.compose.state.rememberSessionMessages
-import io.livekit.android.compose.ui.VideoTrackView
-import io.livekit.android.example.voiceassistant.rememberCanEnableCamera
+import io.livekit.android.compose.types.LocalMedia
+import io.livekit.android.compose.types.ReceivedAgentTranscriptionMessage
+import io.livekit.android.compose.types.ReceivedChatMessage
+import io.livekit.android.compose.types.ReceivedMessage
+import io.livekit.android.compose.types.ReceivedUserTranscriptionMessage
+import io.livekit.android.events.RoomEvent
+import io.livekit.android.example.voiceassistant.APPROVAL_REQUEST_TOPIC
+import io.livekit.android.example.voiceassistant.APPROVAL_RESPONSE_TOPIC
+import io.livekit.android.example.voiceassistant.ApprovalRequest
+import io.livekit.android.example.voiceassistant.approvalResponseJson
+import io.livekit.android.example.voiceassistant.parseApprovalRequest
+import io.livekit.android.example.voiceassistant.realtime.CONTROL_TOPIC
+import io.livekit.android.example.voiceassistant.realtime.ControlPacket
+import io.livekit.android.example.voiceassistant.realtime.HermesCommand
+import io.livekit.android.example.voiceassistant.realtime.InputIntent
+import io.livekit.android.example.voiceassistant.realtime.LatencyTracker
+import io.livekit.android.example.voiceassistant.realtime.STATUS_TOPIC
+import io.livekit.android.example.voiceassistant.realtime.StatusPacket
+import io.livekit.android.example.voiceassistant.realtime.TimelineMessage
+import io.livekit.android.example.voiceassistant.realtime.TimelineUpdate
+import io.livekit.android.example.voiceassistant.realtime.controlPacketJson
+import io.livekit.android.example.voiceassistant.realtime.parseInput
+import io.livekit.android.example.voiceassistant.realtime.parseStatusPacket
+import io.livekit.android.example.voiceassistant.realtime.reduceTimeline
+import io.livekit.android.example.voiceassistant.realtime.suggestInputs
 import io.livekit.android.example.voiceassistant.rememberCanEnableMic
 import io.livekit.android.example.voiceassistant.requirePermissions
-import io.livekit.android.example.voiceassistant.ui.AgentVisualization
 import io.livekit.android.example.voiceassistant.ui.ChatBar
 import io.livekit.android.example.voiceassistant.ui.ChatLog
-import io.livekit.android.example.voiceassistant.ui.ControlBar
 import io.livekit.android.example.voiceassistant.viewmodel.VoiceAssistantViewModel
-import io.livekit.android.room.track.screencapture.ScreenCaptureParams
+import io.livekit.android.room.Room
+import io.livekit.android.room.datastream.StreamTextOptions
+import io.livekit.android.room.track.DataPublishReliability
+import io.livekit.android.room.track.RemoteAudioTrack
+import java.util.UUID
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
+
+private const val AGENT_NAME = "hermes-voice"
 
 @Serializable
 data class VoiceAssistantRoute(
     val tokenServerId: String,
     val hardcodedUrl: String,
-    val hardcodedToken: String,
-    val homepageAgentEndpoint: String
+    val hardcodedToken: String
 )
 
+interface HermesSessionController {
+    val isConnected: Boolean
+    val isReconnecting: Boolean
+
+    suspend fun start(microphoneEnabled: Boolean)
+
+    suspend fun setMicrophoneEnabled(enabled: Boolean)
+
+    suspend fun setAgentVolume(volume: Double)
+}
+
+interface HermesChatTransport {
+    suspend fun sendMessage(text: String, localId: String, operationId: String): String
+
+    suspend fun sendControl(packet: ControlPacket): Boolean
+}
+
+private object NoOpHermesChatTransport : HermesChatTransport {
+    override suspend fun sendMessage(
+        text: String,
+        localId: String,
+        operationId: String
+    ): String = localId
+
+    override suspend fun sendControl(packet: ControlPacket): Boolean = true
+}
+
+@OptIn(Beta::class)
+private class LiveKitHermesSessionController(
+    private val session: Session,
+    private val localMedia: LocalMedia,
+    private val agent: Agent
+) : HermesSessionController {
+    override val isConnected: Boolean
+        get() = session.isConnected
+    override val isReconnecting: Boolean
+        get() = session.isReconnecting
+
+    override suspend fun start(microphoneEnabled: Boolean) {
+        session.start(
+            SessionConnectOptions(
+                tracks = SessionConnectTrackOptions(
+                    microphoneEnabled = microphoneEnabled,
+                    usePreconnectBuffer = microphoneEnabled
+                )
+            )
+        ).getOrThrow()
+    }
+
+    override suspend fun setMicrophoneEnabled(enabled: Boolean) {
+        localMedia.setMicrophoneEnabled(enabled)
+    }
+
+    override suspend fun setAgentVolume(volume: Double) {
+        if (agent.audioTrack == null) {
+            withTimeoutOrNull(5_000) { agent.waitUntilMicrophone() }
+        }
+        (agent.audioTrack?.publication?.track as? RemoteAudioTrack)?.setVolume(volume)
+    }
+}
+
+@OptIn(Beta::class)
+private class LiveKitHermesChatTransport(
+    private val messages: SessionMessages,
+    private val room: Room
+) : HermesChatTransport {
+    override suspend fun sendMessage(
+        text: String,
+        localId: String,
+        operationId: String
+    ): String {
+        val message = messages.send(
+            text,
+            StreamTextOptions(
+                topic = "lk.chat",
+                attributes = mapOf("local_id" to localId, "op_id" to operationId)
+            )
+        ).getOrThrow()
+        return message.id
+    }
+
+    override suspend fun sendControl(packet: ControlPacket): Boolean {
+        val payload = controlPacketJson(packet) ?: return false
+        return room.localParticipant.publishData(
+            payload.encodeToByteArray(),
+            reliability = DataPublishReliability.RELIABLE,
+            topic = CONTROL_TOPIC
+        ).isSuccess
+    }
+}
+
 @Composable
-fun VoiceAssistantScreen(
-    viewModel: VoiceAssistantViewModel,
-    onEndCall: () -> Unit,
-) {
+fun VoiceAssistantScreen(viewModel: VoiceAssistantViewModel) {
     VoiceAssistant(
         viewModel = viewModel,
-        modifier = Modifier.fillMaxSize(),
-        onEndCall = onEndCall
+        modifier = Modifier.fillMaxSize()
     )
 }
 
@@ -91,297 +209,516 @@ fun VoiceAssistantScreen(
 @Composable
 fun VoiceAssistant(
     viewModel: VoiceAssistantViewModel,
-    modifier: Modifier = Modifier,
-    onEndCall: () -> Unit
+    modifier: Modifier = Modifier
 ) {
-    var requestedAudio by remember { mutableStateOf(true) } // Turn on audio by default.
-    var requestedVideo by remember { mutableStateOf(false) }
-
-    requirePermissions(requestedAudio, requestedVideo)
-
+    var requestedAudio by remember { mutableStateOf(false) }
+    requirePermissions(requestedAudio, false)
     val canEnableMic by rememberCanEnableMic()
-    val canEnableVideo by rememberCanEnableCamera()
-
     val session = rememberSession(
         tokenSource = viewModel.tokenSource,
         options = SessionOptions(
-            room = viewModel.room
+            room = viewModel.room,
+            tokenRequestOptions = viewModel.tokenRequestOptions(AGENT_NAME)
         )
     )
-
     val context = LocalContext.current
 
-    SessionScope(session = session) { session ->
-
-        // Start the session when we have at least microphone permissions.
-        // Permission removals kill the app, so this is a one-way transition.
-        LaunchedEffect(canEnableMic) {
-            if (!canEnableMic) {
-                return@LaunchedEffect
-            }
-
-            val result = session.start()
-
-            // Handle if the session fails to connect.
-            if (result.isFailure) {
-                Toast.makeText(context, "Error connecting to the session.", Toast.LENGTH_SHORT).show()
-                onEndCall()
-            }
-        }
-
-        // End the session when leaving the screen.
+    SessionScope(session = session) {
         DisposableEffect(Unit) {
-            onDispose {
-                session.end()
-            }
+            onDispose { session.end() }
         }
 
         val room = requireRoom()
-        var chatVisible by remember { mutableStateOf(false) }
-
-        // LocalMedia provides state information about the user's local devices
         val localMedia = rememberLocalMedia()
-        val isMicEnabled by localMedia::isMicrophoneEnabled
-        val isCameraEnabled by localMedia::isCameraEnabled
-        val isScreenShareEnabled by localMedia::isScreenShareEnabled
-
-        LaunchedEffect(canEnableMic, requestedAudio) {
-            session.waitUntilConnected()
-            localMedia.setMicrophoneEnabled(canEnableMic && requestedAudio)
-        }
-
-        LaunchedEffect(canEnableVideo, requestedVideo) {
-            session.waitUntilConnected()
-            localMedia.setCameraEnabled(canEnableVideo && requestedVideo)
-        }
-
-        // SessionMessages handles all transcriptions and chat messages
-        val sessionMessages = rememberSessionMessages()
-
-        // Agent provides state information about the agent participant.
         val agent = rememberAgent()
-
-        val constraints = getConstraints(chatVisible, isCameraEnabled, isScreenShareEnabled)
-        ConstraintLayout(
-            constraintSet = constraints,
-            modifier = modifier,
-            animateChangesSpec = spring()
-        ) {
-            val coroutineScope = rememberCoroutineScope { Dispatchers.IO }
-
-            ChatLog(
-                room = room,
-                messages = sessionMessages.messages,
-                modifier = Modifier.layoutId(LAYOUT_ID_CHAT_LOG)
-            )
-
-            var message by rememberSaveable {
-                mutableStateOf("")
+        val sessionMessages = rememberSessionMessages()
+        val controller = remember(session, localMedia, agent) {
+            LiveKitHermesSessionController(session, localMedia, agent)
+        }
+        val chatTransport = remember(sessionMessages, room) {
+            LiveKitHermesChatTransport(sessionMessages, room)
+        }
+        val coroutineScope = rememberCoroutineScope { Dispatchers.IO }
+        val statusScope = rememberCoroutineScope()
+        var pendingApproval by remember { mutableStateOf<ApprovalRequest?>(null) }
+        var statusUpdates by remember { mutableStateOf(emptyList<TimelineUpdate>()) }
+        val messageUpdates = remember(sessionMessages.messages) {
+            sessionMessages.messages.mapNotNull { message ->
+                message.toTimelineUpdate(room)
             }
-            ChatBar(
-                value = message,
-                onValueChange = { message = it },
-                onChatSend = { msg ->
-                    coroutineScope.launch {
-                        sessionMessages.send(msg)
-                    }
-                    message = ""
-                },
-                modifier = Modifier.layoutId(LAYOUT_ID_CHAT_BAR)
-            )
+        }
+        val initialHistory = remember(viewModel.identity.conversationId) {
+            viewModel.historyRepository.load(viewModel.identity.conversationId)
+        }
 
-            // Amplitude visualization of the Assistant's voice track.
-            val agentBorderAlpha by animateFloatAsState(if (chatVisible) 1f else 0f, label = "agentBorderAlpha")
-            AgentVisualization(
-                agent = agent,
-                modifier = Modifier
-                    .layoutId(LAYOUT_ID_AGENT)
-                    .clip(RoundedCornerShape(8.dp))
-                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = agentBorderAlpha), RoundedCornerShape(8.dp))
-            )
-
-            val context = LocalContext.current
-            val screenSharePermissionLauncher =
-                rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                    val resultCode = result.resultCode
-                    val data = result.data
-                    if (resultCode != Activity.RESULT_OK || data == null) {
-                        return@rememberLauncherForActivityResult
-                    }
-                    coroutineScope.launch {
-                        // Agents only support one video stream at a time.
-                        requestedVideo = false
-                        localMedia.setScreenShareEnabled(true, ScreenCaptureParams(data))
-                    }
-                }
-
-            ControlBar(
-                isMicEnabled = isMicEnabled,
-                onMicClick = { requestedAudio = !requestedAudio },
-                localAudioTrack = localMedia.microphoneTrack,
-                isCameraEnabled = isCameraEnabled,
-                onCameraClick = {
-                    requestedVideo = !requestedVideo
-                    if (requestedVideo) {
-                        // Agents only support one video stream at a time.
-                        coroutineScope.launch { localMedia.setScreenShareEnabled(false) }
-                    }
-                },
-                isScreenShareEnabled = isScreenShareEnabled,
-                onScreenShareClick = {
-                    if (!isScreenShareEnabled) {
-                        // Screenshare permission needs to be requested each time.
-                        val mediaProjectionManager = context.getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-                        screenSharePermissionLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
-                    } else {
-                        coroutineScope.launch { localMedia.setScreenShareEnabled(false) }
-                    }
-                },
-                isChatEnabled = chatVisible,
-                onChatClick = { chatVisible = !chatVisible },
-                onExitClick = onEndCall,
-                modifier = Modifier
-                    .layoutId(LAYOUT_ID_CONTROL_BAR)
-            )
-
-            val cameraAlpha by animateFloatAsState(targetValue = if (isCameraEnabled) 1f else 0f, label = "Camera Alpha")
-            Box(
-                modifier = Modifier
-                    .layoutId(LAYOUT_ID_CAMERA)
-                    .clickable { localMedia.switchCamera() }
-                    .clip(RoundedCornerShape(8.dp))
-                    .alpha(cameraAlpha)
-            ) {
-                VideoTrackView(
-                    trackReference = localMedia.cameraTrack,
-                    modifier = Modifier.fillMaxSize()
-                )
-
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 8.dp, bottom = 8.dp)
-                        .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(50))
-                        .fillMaxWidth(.35f)
-                        .aspectRatio(1f)
+        LaunchedEffect(room) {
+            room.events.events.collect { event ->
+                if (event is RoomEvent.DataReceived &&
+                    event.topic == APPROVAL_REQUEST_TOPIC
                 ) {
-                    Icon(
-                        Icons.Default.Cameraswitch,
-                        tint = Color.White.copy(alpha = 0.7f),
-                        contentDescription = "Flip Camera",
-                        modifier = Modifier.fillMaxSize(0.6f)
-                    )
+                    parseApprovalRequest(event.data)?.let { pendingApproval = it }
                 }
             }
+        }
 
-            val screenShareAlpha by animateFloatAsState(targetValue = if (isScreenShareEnabled) 1f else 0f, label = "Screen Share Alpha")
-            VideoTrackView(
-                trackReference = localMedia.screenShareTrack,
-                modifier = Modifier
-                    .layoutId(LAYOUT_ID_SCREENSHARE)
-                    .clip(RoundedCornerShape(8.dp))
-                    .alpha(screenShareAlpha)
+        DisposableEffect(room) {
+            room.registerTextStreamHandler(STATUS_TOPIC) { receiver, _ ->
+                statusScope.launch {
+                    val payload = StringBuilder()
+                    receiver.flow.collect(payload::append)
+                    parseStatusPacket(payload.toString().encodeToByteArray())
+                        ?.toTimelineUpdate(
+                            eventId = receiver.info.id,
+                            timestampMs = receiver.info.timestampMs
+                        )
+                        ?.let { statusUpdates = statusUpdates + it }
+                }
+            }
+            onDispose { room.unregisterTextStreamHandler(STATUS_TOPIC) }
+        }
+
+        fun respondToApproval(choice: String) {
+            val request = pendingApproval ?: return
+            pendingApproval = null
+            val payload = approvalResponseJson(request.runId, choice) ?: return
+            coroutineScope.launch {
+                room.localParticipant.publishData(
+                    payload.encodeToByteArray(),
+                    reliability = DataPublishReliability.RELIABLE,
+                    topic = APPROVAL_RESPONSE_TOPIC
+                )
+            }
+        }
+
+        Box(modifier = modifier) {
+            HermesScreen(
+                controller = controller,
+                chatTransport = chatTransport,
+                incomingUpdates = messageUpdates + statusUpdates,
+                initialMessages = initialHistory,
+                canEnableMic = canEnableMic,
+                onRequestMicrophonePermission = { requestedAudio = true },
+                onRotateConversation = {
+                    val identity = viewModel.rotateConversation()
+                    room.localParticipant.updateAttributes(
+                        mapOf("hermes.conversation_id" to identity.conversationId)
+                    )
+                    identity.conversationId
+                },
+                onTimelineChanged = {
+                    viewModel.historyRepository.save(
+                        viewModel.identity.conversationId,
+                        it
+                    )
+                },
+                onConnectionError = {
+                    Toast.makeText(
+                        context,
+                        "Hermes-এর সঙ্গে সংযোগ করা যায়নি।",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             )
+
+            pendingApproval?.let { request ->
+                HermesApprovalDialog(
+                    request = request,
+                    onConfirm = { respondToApproval("once") },
+                    onCancel = { respondToApproval("deny") }
+                )
+            }
         }
     }
 }
 
+@Composable
+fun HermesScreen(
+    controller: HermesSessionController,
+    modifier: Modifier = Modifier,
+    chatTransport: HermesChatTransport = NoOpHermesChatTransport,
+    incomingUpdates: List<TimelineUpdate> = emptyList(),
+    initialMessages: List<TimelineMessage> = emptyList(),
+    canEnableMic: Boolean = true,
+    onRequestMicrophonePermission: () -> Unit = {},
+    onRotateConversation: () -> String = { "conversation-${UUID.randomUUID()}" },
+    onTimelineChanged: (List<TimelineMessage>) -> Unit = {},
+    onConnectionError: (Throwable) -> Unit = {}
+) {
+    val coroutineScope = rememberCoroutineScope()
+    var callActive by remember { mutableStateOf(false) }
+    var micEnabled by remember { mutableStateOf(false) }
+    var pendingCall by remember { mutableStateOf(false) }
+    var input by remember { mutableStateOf("") }
+    var timeline by remember { mutableStateOf(initialMessages) }
+    var working by remember { mutableStateOf(false) }
+    var activeLatency by remember { mutableStateOf<LatencyTracker?>(null) }
 
-private const val LAYOUT_ID_AGENT = "agentVisualizer"
-private const val LAYOUT_ID_CHAT_LOG = "chatLog"
-private const val LAYOUT_ID_CONTROL_BAR = "controlBar"
-private const val LAYOUT_ID_CHAT_BAR = "chatBar"
-private const val LAYOUT_ID_CAMERA = "camera"
-private const val LAYOUT_ID_SCREENSHARE = "screenshare"
-
-private fun getConstraints(chatVisible: Boolean, cameraVisible: Boolean, screenShareVisible: Boolean) = ConstraintSet {
-    val (agentVisualizer, chatLog, controlBar, chatBar, camera, screenShare) = createRefsFor(
-        LAYOUT_ID_AGENT,
-        LAYOUT_ID_CHAT_LOG,
-        LAYOUT_ID_CONTROL_BAR,
-        LAYOUT_ID_CHAT_BAR,
-        LAYOUT_ID_CAMERA,
-        LAYOUT_ID_SCREENSHARE,
-    )
-    val chatTopGuideline = createGuidelineFromTop(0.2f)
-
-    constrain(chatLog) {
-        top.linkTo(chatTopGuideline)
-        bottom.linkTo(chatBar.top)
-        start.linkTo(parent.start)
-        end.linkTo(parent.end)
-        width = Dimension.fillToConstraints
-        height = Dimension.fillToConstraints
+    LaunchedEffect(Unit) {
+        runCatching {
+            controller.start(microphoneEnabled = false)
+            controller.setAgentVolume(0.0)
+        }.onFailure(onConnectionError)
     }
 
-    constrain(chatBar) {
-        bottom.linkTo(controlBar.top, 16.dp)
-        start.linkTo(parent.start, 16.dp)
-        end.linkTo(parent.end, 16.dp)
-        width = Dimension.fillToConstraints
-        height = Dimension.wrapContent
-    }
-
-    constrain(controlBar) {
-        bottom.linkTo(parent.bottom, 10.dp)
-        start.linkTo(parent.start, 16.dp)
-        end.linkTo(parent.end, 16.dp)
-
-        width = Dimension.fillToConstraints
-        height = Dimension.value(60.dp)
-    }
-
-    if (chatVisible) {
-        val chain = createHorizontalChain(agentVisualizer, screenShare, camera, chainStyle = ChainStyle.Spread)
-
-        constrain(chain) {
-            start.linkTo(parent.start)
-            end.linkTo(parent.end)
-        }
-
-        fun ConstrainScope.itemConstraints(visible: Boolean = true) {
-            top.linkTo(parent.top)
-            bottom.linkTo(chatTopGuideline)
-            width = Dimension.percent(0.3f)
-            height = Dimension.fillToConstraints
-            visibility = if (visible) Visibility.Visible else Visibility.Gone
-        }
-        constrain(agentVisualizer) {
-            itemConstraints()
-        }
-        constrain(camera) {
-            itemConstraints(cameraVisible)
-        }
-        constrain(screenShare) {
-            itemConstraints(screenShareVisible)
-        }
-    } else {
-        constrain(agentVisualizer) {
-            top.linkTo(parent.top)
-            bottom.linkTo(parent.bottom)
-            start.linkTo(parent.start)
-            end.linkTo(parent.end)
-            height = Dimension.fillToConstraints
-            width = Dimension.fillToConstraints
-        }
-        constrain(camera) {
-            end.linkTo(parent.end, 16.dp)
-            bottom.linkTo(controlBar.top, 16.dp)
-            width = Dimension.percent(0.25f)
-            height = Dimension.percent(0.2f)
-            visibility = if (cameraVisible) Visibility.Visible else Visibility.Gone
-        }
-        constrain(screenShare) {
-            if (cameraVisible) {
-                end.linkTo(camera.start, 16.dp)
-            } else {
-                end.linkTo(parent.end, 16.dp)
+    LaunchedEffect(incomingUpdates) {
+        var next = timeline
+        incomingUpdates.forEach { update ->
+            next = reduceTimeline(next, update)
+            if (update is TimelineUpdate.Status) {
+                working = update.statusType in setOf(
+                    "delegation.requested",
+                    "tool.started",
+                    "subagent.start"
+                )
+                if (update.statusType in setOf(
+                        "run.completed",
+                        "run.failed",
+                        "run.cancelled"
+                    )
+                ) {
+                    working = false
+                }
             }
-            bottom.linkTo(controlBar.top, 16.dp)
-            width = Dimension.percent(0.25f)
-            height = Dimension.percent(0.2f)
-            visibility = if (screenShareVisible) Visibility.Visible else Visibility.Gone
+            if (update is TimelineUpdate.Transcript && !update.isUser) {
+                activeLatency?.let { tracker ->
+                    if (tracker.durationMs("send_pressed", "first_ui_delta") == null) {
+                        tracker.mark("first_ui_delta")
+                    }
+                }
+                if (update.isFinal) working = false
+            }
+        }
+        timeline = next
+    }
+
+    LaunchedEffect(timeline) {
+        onTimelineChanged(timeline)
+    }
+
+    LaunchedEffect(canEnableMic, pendingCall) {
+        if (pendingCall && canEnableMic) {
+            controller.setAgentVolume(1.0)
+            controller.setMicrophoneEnabled(true)
+            callActive = true
+            micEnabled = true
+            pendingCall = false
         }
     }
+
+    fun beginCall() {
+        if (!canEnableMic) {
+            pendingCall = true
+            onRequestMicrophonePermission()
+            return
+        }
+        coroutineScope.launch {
+            controller.setAgentVolume(1.0)
+            controller.setMicrophoneEnabled(true)
+            callActive = true
+            micEnabled = true
+        }
+    }
+
+    fun mute() {
+        coroutineScope.launch {
+            controller.setMicrophoneEnabled(false)
+            micEnabled = false
+        }
+    }
+
+    fun unmute() {
+        if (!callActive) {
+            beginCall()
+            return
+        }
+        if (!canEnableMic) {
+            pendingCall = true
+            onRequestMicrophonePermission()
+            return
+        }
+        coroutineScope.launch {
+            controller.setMicrophoneEnabled(true)
+            micEnabled = true
+        }
+    }
+
+    fun endCall() {
+        coroutineScope.launch {
+            controller.setMicrophoneEnabled(false)
+            controller.setAgentVolume(0.0)
+            callActive = false
+            micEnabled = false
+        }
+    }
+
+    fun addStatus(text: String, type: String, operationId: String = newOperationId()) {
+        timeline = reduceTimeline(
+            timeline,
+            TimelineUpdate.Status(operationId, text, type, System.currentTimeMillis())
+        )
+    }
+
+    fun sendControl(command: HermesCommand, conversationId: String? = null) {
+        val operationId = newOperationId()
+        coroutineScope.launch {
+            if (!chatTransport.sendControl(
+                    ControlPacket(
+                        opId = operationId,
+                        command = command.wireValue,
+                        conversationId = conversationId
+                    )
+                )
+            ) {
+                addStatus("Control delivery failed", "delivery.failed", operationId)
+            }
+        }
+    }
+
+    fun sendMessage(text: String) {
+        val localId = newOperationId()
+        val operationId = newOperationId()
+        val tracker = LatencyTracker(operationId).apply { mark("send_pressed") }
+        activeLatency = tracker
+        timeline = reduceTimeline(
+            timeline,
+            TimelineUpdate.LocalText(localId, text, System.currentTimeMillis())
+        )
+        working = true
+        coroutineScope.launch {
+            runCatching {
+                chatTransport.sendMessage(text, localId, operationId)
+            }.onSuccess { transportId ->
+                tracker.mark("packet_sent")
+                timeline = reduceTimeline(
+                    timeline,
+                    TimelineUpdate.TextSent(
+                        localId,
+                        transportId,
+                        System.currentTimeMillis()
+                    )
+                )
+            }.onFailure {
+                working = false
+                timeline = reduceTimeline(
+                    timeline,
+                    TimelineUpdate.TextFailed(localId, System.currentTimeMillis())
+                )
+            }
+        }
+    }
+
+    fun submit(raw: String) {
+        if (raw.isBlank()) return
+        input = ""
+        when (val intent = parseInput(raw.trim())) {
+            is InputIntent.Message -> sendMessage(intent.text)
+            is InputIntent.Control -> when (intent.command) {
+                HermesCommand.NEW -> {
+                    val conversationId = onRotateConversation()
+                    timeline = emptyList()
+                    working = false
+                    sendControl(HermesCommand.NEW, conversationId)
+                }
+                HermesCommand.STATUS -> {
+                    addStatus(
+                        if (controller.isConnected) "Connected · text ready" else "Connecting",
+                        "local.status"
+                    )
+                    sendControl(HermesCommand.STATUS)
+                }
+                HermesCommand.STOP -> sendControl(HermesCommand.STOP)
+                else -> Unit
+            }
+            is InputIntent.Local -> when (intent.command) {
+                HermesCommand.MUTE -> mute()
+                HermesCommand.UNMUTE -> unmute()
+                HermesCommand.VOICE,
+                HermesCommand.CALL -> beginCall()
+                HermesCommand.ENDCALL -> endCall()
+                HermesCommand.HELP -> addStatus(
+                    "Use text, @agent routes, or /new /status /stop /call /mute",
+                    "local.help"
+                )
+                else -> Unit
+            }
+        }
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "HERMES",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Surface(
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shape = RoundedCornerShape(50)
+            ) {
+                Text(
+                    text = when {
+                        controller.isReconnecting -> "Reconnecting..."
+                        controller.isConnected -> "Connected"
+                        else -> "Connecting..."
+                    },
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+        }
+
+        ChatLog(
+            messages = timeline,
+            working = working,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(vertical = 10.dp)
+                .testTag("conversation_timeline")
+        )
+
+        Text(
+            text = if (micEnabled) "মাইক্রোফোন চালু" else "মাইক্রোফোন বন্ধ",
+            modifier = Modifier.padding(bottom = 6.dp),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.labelMedium
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (!callActive) {
+                OutlinedButton(onClick = ::beginCall) {
+                    Icon(Icons.Default.Call, contentDescription = "Call Hermes")
+                    Spacer(Modifier.size(6.dp))
+                    Text("CALL HERMES")
+                }
+            } else {
+                OutlinedButton(onClick = { if (micEnabled) mute() else unmute() }) {
+                    Icon(
+                        if (micEnabled) Icons.Default.Mic else Icons.Default.MicOff,
+                        contentDescription = "Toggle microphone"
+                    )
+                    Spacer(Modifier.size(6.dp))
+                    Text(if (micEnabled) "MUTE" else "UNMUTE")
+                }
+                Button(
+                    onClick = ::endCall,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Icon(Icons.Default.CallEnd, contentDescription = "End call")
+                    Spacer(Modifier.size(6.dp))
+                    Text("END CALL")
+                }
+            }
+        }
+
+        ChatBar(
+            value = input,
+            onValueChange = { input = it },
+            onChatSend = ::submit,
+            suggestions = suggestInputs(input),
+            onSuggestionSelected = { input = "$it " },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+        )
+    }
+}
+
+private fun ReceivedMessage.toTimelineUpdate(room: Room): TimelineUpdate = when (this) {
+    is ReceivedUserTranscriptionMessage -> TimelineUpdate.Transcript(
+        segmentId = attributes["lk.segment_id"] ?: id,
+        text = message,
+        isFinal = attributes["lk.transcription_final"] == "true",
+        isUser = true,
+        timestampMs = timestamp
+    )
+    is ReceivedAgentTranscriptionMessage -> TimelineUpdate.Transcript(
+        segmentId = attributes["lk.segment_id"] ?: id,
+        text = message,
+        isFinal = attributes["lk.transcription_final"] == "true",
+        isUser = false,
+        timestampMs = timestamp
+    )
+    is ReceivedChatMessage -> TimelineUpdate.RemoteText(
+        transportId = id,
+        text = message,
+        isFinal = true,
+        timestampMs = timestamp,
+        isUser = fromParticipant?.identity == room.localParticipant.identity,
+        localId = attributes["local_id"]
+    )
+}
+
+private fun StatusPacket.toTimelineUpdate(
+    eventId: String,
+    timestampMs: Long
+): TimelineUpdate? {
+    val text = when (type) {
+        "session.ready" -> "Hermes session ready"
+        "tool.started" -> tool?.let { "Using $it" }
+        "tool.completed" -> tool?.let { "$it completed" }
+        "subagent.start" -> status ?: "Specialist working"
+        "subagent.complete" -> status ?: "Specialist completed"
+        "delegation.requested" -> status ?: mention?.let { "$it assigned" }
+        "approval.request" -> "Confirmation required on this device"
+        "run.completed" -> "Completed"
+        "run.failed" -> "Hermes run failed"
+        "run.cancelled" -> "Stopped"
+        "first_hermes_delta" -> durationMs?.let { "First response · ${it}ms" }
+        else -> null
+    } ?: return null
+    return TimelineUpdate.Status(eventId, text, type, timestampMs)
+}
+
+private fun newOperationId(): String = "op-${UUID.randomUUID()}"
+
+@Composable
+fun HermesApprovalDialog(
+    request: ApprovalRequest,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = {
+            Text(
+                "⚠ DESTRUCTIVE ACTION",
+                color = MaterialTheme.colorScheme.error,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Agent: ${request.displayAgent}")
+                Text("Action: ${request.action}")
+                Text("Target: ${request.target}")
+                Text("Reason: ${request.reason}")
+                Text(
+                    "Voice or text approval is not accepted. Confirm only by tapping this dialog.",
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = onConfirm) { Text("CONFIRM") }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) { Text("CANCEL") }
+        }
+    )
 }
