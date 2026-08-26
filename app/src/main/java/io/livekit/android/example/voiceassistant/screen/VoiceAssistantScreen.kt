@@ -357,7 +357,7 @@ fun HermesScreen(
             next = reduceTimeline(next, update)
             if (update is TimelineUpdate.Status) {
                 working = update.statusType in setOf(
-                    "delegation",
+                    "delegation.requested",
                     "tool.started",
                     "subagent.start"
                 )
@@ -664,7 +664,7 @@ private fun StatusPacket.toTimelineUpdate(
         "tool.completed" -> tool?.let { "$it completed" }
         "subagent.start" -> status ?: "Specialist working"
         "subagent.complete" -> status ?: "Specialist completed"
-        "delegation" -> status ?: mention?.let { "$it assigned" }
+        "delegation.requested" -> status ?: mention?.let { "$it assigned" }
         "approval.request" -> "Confirmation required on this device"
         "run.completed" -> "Completed"
         "run.failed" -> "Hermes run failed"

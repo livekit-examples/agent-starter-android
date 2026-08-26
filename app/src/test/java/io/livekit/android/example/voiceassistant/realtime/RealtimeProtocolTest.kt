@@ -63,4 +63,15 @@ class RealtimeProtocolTest {
         assertEquals(240, packet?.durationsMs?.get("send_to_first"))
         assertTrue(packet?.durationsMs?.values?.all { it >= 0 } == true)
     }
+
+    @Test
+    fun delegationRequestedStatusUsesExplicitSafeFields() {
+        val packet = parseStatusPacket(
+            """{"version":1,"type":"delegation.requested","mention":"coder","status":"Coder assigned"}"""
+                .encodeToByteArray()
+        )
+
+        assertEquals("delegation.requested", packet?.type)
+        assertEquals("coder", packet?.mention)
+    }
 }

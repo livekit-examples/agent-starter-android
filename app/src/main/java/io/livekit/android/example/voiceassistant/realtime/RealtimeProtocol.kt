@@ -81,7 +81,7 @@ private val statusFields = mapOf(
     "run.completed" to emptySet(),
     "run.failed" to emptySet(),
     "run.cancelled" to emptySet(),
-    "delegation" to setOf("mention", "status"),
+    "delegation.requested" to setOf("mention", "status"),
     "first_hermes_delta" to setOf("duration_ms"),
     "agent.state" to setOf("state"),
     "user.state" to setOf("state"),
