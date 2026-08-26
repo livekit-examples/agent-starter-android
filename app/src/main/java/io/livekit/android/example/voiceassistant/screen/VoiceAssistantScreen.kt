@@ -312,7 +312,7 @@ fun VoiceAssistant(
             )
 
             pendingApproval?.let { request ->
-                ApprovalDialog(
+                HermesApprovalDialog(
                     request = request,
                     onConfirm = { respondToApproval("once") },
                     onCancel = { respondToApproval("deny") }
@@ -678,31 +678,35 @@ private fun StatusPacket.toTimelineUpdate(
 private fun newOperationId(): String = "op-${UUID.randomUUID()}"
 
 @Composable
-private fun ApprovalDialog(
+fun HermesApprovalDialog(
     request: ApprovalRequest,
     onConfirm: () -> Unit,
     onCancel: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onCancel,
-        title = { Text("অনুমোদন প্রয়োজন") },
+        title = {
+            Text(
+                "⚠ DESTRUCTIVE ACTION",
+                color = MaterialTheme.colorScheme.error,
+                fontWeight = FontWeight.Bold
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("কাজ", fontWeight = FontWeight.Bold)
-                Text(request.action)
-                Text("লক্ষ্য", fontWeight = FontWeight.Bold)
-                Text(request.target)
-                Text("কারণ", fontWeight = FontWeight.Bold)
-                Text(request.reason)
+                Text("Agent: ${request.displayAgent}")
+                Text("Action: ${request.action}")
+                Text("Target: ${request.target}")
+                Text("Reason: ${request.reason}")
                 Text(
-                    "কণ্ঠে ‘হ্যাঁ’ বললে অনুমোদন হবে না।",
+                    "Voice or text approval is not accepted. Confirm only by tapping this dialog.",
                     color = MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.SemiBold
                 )
             }
         },
         confirmButton = {
-            Button(onClick = onConfirm) { Text("CONFIRM ONCE") }
+            Button(onClick = onConfirm) { Text("CONFIRM") }
         },
         dismissButton = {
             TextButton(onClick = onCancel) { Text("CANCEL") }
